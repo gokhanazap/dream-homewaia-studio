@@ -182,7 +182,7 @@ dialog::backdrop { background: #23242a80; }
 .pick-chip[aria-pressed=true], .style-card[aria-pressed=true] { background: var(--accent-soft); border-color: var(--accent-hover); }
 .style-card { flex: none; width: 138px; padding: 0; overflow: hidden; text-align: center; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; }
 .style-card strong { display: block; padding: 8px; }
-.style-image { display: block; height: 104px; background: url(./assets/styles.webp) 0 0 / 200% 200%; }
+.style-image { display: block; height: 104px; background: center / cover; }
 .segmented { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 5px; background: var(--surface-2); border-radius: 16px; }
 .segmented button { min-height: 50px; background: none; border: 0; border-radius: 12px; font-size: 18px; font-weight: 800; }
 .segmented button[aria-pressed=true] { background: var(--accent); }

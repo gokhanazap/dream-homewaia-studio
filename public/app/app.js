@@ -10,8 +10,14 @@ const STORE_KEY = 'waia-app-state-v1';
 const MAX_SIDE = 1024;
 const MIN_WAIT_MS = 5000;
 const ROOMS = ['Living room', 'Bedroom', 'Kitchen', 'Dining room', 'Home office', 'Other'];
-// Each style maps to one quarter of assets/styles.webp.
-const STYLES = [['Minimal', '0% 0%'], ['Modern', '100% 0%'], ['Bohemian', '0% 100%'], ['Traditional', '100% 100%']];
+const STYLES = [
+  ['Scandinavian', 'look-living-scandi'],
+  ['Modern', 'look-living-modern'],
+  ['Bohemian', 'look-bedroom-boho'],
+  ['Industrial', 'look-office-industrial'],
+  ['Minimal', 'bedroom'],
+  ['Traditional', 'room-after'],
+];
 const CHANGES = ['Better lighting', 'Wall decor', 'New furniture', 'Cozier feel', 'More storage', 'Add plants'];
 const BUDGETS = [
   ['$', 'Under $250', 'A few small upgrades.'],
@@ -143,12 +149,12 @@ function homeView() {
     <section class="hero"><h1>Complete the room <em>you already have.</em></h1></section>
     <button class="tool" data-act="start"><span class="tool-icon" aria-hidden="true">⌂</span><span><strong>Room Designer</strong><small>Your room, your budget, real products.</small></span><span class="tool-arrow" aria-hidden="true">→</span></button>
     <article class="feature">
-      <img src="./assets/real-living-after.webp" alt="Living room with a patterned rug, arc floor lamp and framed art">
+      <img src="./assets/look-living-scandi.webp" alt="Scandinavian living room with a gray sofa and oak furniture">
       <span class="tag">Start here</span>
       <div class="feature-body"><h2>See it in your room</h2><button class="primary" data-act="start">Try now <span aria-hidden="true">→</span></button></div>
     </article>
-    <section class="item"><h2>Real products. Real prices.</h2><p class="muted">Tap a price to see the product. Example rooms are generated previews.</p></section>
-    ${EXAMPLES.map(({ id, title, pins }) => `<section class="item example">${compare(`./assets/real-${id}-before.webp`, `./assets/real-${id}-after.webp`, pins)}<div><strong>${title}</strong><small>${pins.map(pin => pin.store).filter((store, index, list) => list.indexOf(store) === index).join(', ')}</small></div></section>`).join('')}`;
+    <section class="item"><h2>One room. Your style.</h2><p class="muted">Tap a price to see the product. Example rooms are generated previews.</p></section>
+    ${EXAMPLES.map(({ id, room, title, pins }) => `<section class="item example">${compare(`./assets/real-${room}-before.webp`, `./assets/look-${id}.webp`, pins)}<div><strong>${title}</strong><small>${pins.map(pin => pin.store).filter((store, index, list) => list.indexOf(store) === index).join(', ')}</small></div></section>`).join('')}`;
 }
 
 function section(number, title, tag, body) {
@@ -175,7 +181,7 @@ function createView() {
   const photo = draft.photo
     ? `<label class="dropzone filled"><input type="file" accept="image/*" data-file><img src="${draft.photo}" alt="Your room"><span class="tag">Change photo</span></label>`
     : '<label class="dropzone"><input type="file" accept="image/*" data-file><span aria-hidden="true">＋</span><strong>Tap to upload a photo</strong><small>Use good light and a wide angle</small></label>';
-  const styles = STYLES.map(([label, position]) => `<button class="style-card" data-pick="style" data-value="${label}" aria-pressed="${draft.style === label}"><span class="style-image" style="background-position: ${position}"></span><strong>${label}</strong></button>`).join('');
+  const styles = STYLES.map(([label, image]) => `<button class="style-card" data-pick="style" data-value="${label}" aria-pressed="${draft.style === label}"><span class="style-image" style="background-image: url(./assets/${image}.webp)"></span><strong>${label}</strong></button>`).join('');
   const budgets = BUDGETS.map(([symbol, label]) => `<button data-pick="budget" data-value="${escapeHtml(label)}" aria-pressed="${draft.budget === label}" aria-label="${escapeHtml(label)}">${symbol}</button>`).join('');
   return `<header class="topbar">
       <button class="icon-button" data-go="home" aria-label="Back">←</button>

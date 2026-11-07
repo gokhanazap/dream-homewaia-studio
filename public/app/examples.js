@@ -1,110 +1,138 @@
 // Generated sample rooms. Prices and links are from a product search on 2026-11-07.
 export const EXAMPLES = [
   {
-    "id": "living",
-    "title": "Living room",
+    "id": "living-scandi",
+    "room": "living",
+    "title": "Scandinavian living room",
     "pins": [
       {
         "name": "Sofa",
-        "title": "Best Selling Home Decor Jason 72.25-in W Midcentury Gray 3-seater Sofa",
-        "store": "Lowe's",
-        "price": "$519.87",
-        "url": "https://www.lowes.com/pd/Best-Selling-Home-Decor-Jason-Mid-Century-Modern-Tufted-Fabric-Sofa-Gray/5000264387",
-        "x": 78,
-        "y": 72
+        "title": "MORABO Sofa, Gunnared dark gray/wood",
+        "store": "IKEA",
+        "price": "$549.00",
+        "url": "https://www.ikea.com/us/en/p/morabo-sofa-gunnared-dark-gray-wood-s89318321/",
+        "x": 80,
+        "y": 74
+      },
+      {
+        "name": "Coffee table",
+        "title": "Coaster Ottowa 35.5-Inch Living Room Round Coffee Table, Light Oak 706298",
+        "store": "Amazon",
+        "price": "$196.95",
+        "url": "https://www.amazon.com/Coaster-Ottowa-35-5-Inch-Living-706298/dp/B0FVR6T5Q3",
+        "x": 46,
+        "y": 62
       },
       {
         "name": "Area rug",
-        "title": "George Oliver Diana Geometric Gray & Cream Indoor / Outdoor Area Rug 5x7 - ( 5'3'' x 7'3'' )",
-        "store": "Wayfair",
-        "price": "$91.99",
-        "url": "https://www.wayfair.com/rugs/pdp/george-oliver-diana-geometric-gray-cream-indoor-outdoor-area-rug-5x7-53-x-73-w112908820.html",
-        "x": 46,
-        "y": 80
+        "title": "SAFAVIEH Florida Shag Cream 7 ft. x 7 ft. Round Solid Area Rug",
+        "store": "Home Depot",
+        "price": "$182.00",
+        "url": "https://www.homedepot.com/p/SAFAVIEH-Florida-Shag-Cream-7-ft-x-7-ft-Round-Solid-Area-Rug-SG471-1111-7R/312750523",
+        "x": 36,
+        "y": 84
       },
       {
         "name": "Floor lamp",
-        "title": "SUNMORY 62in. Black Arc Floor Lamp, Modern Floor Lamp with 9W 3-Color Tempe Bulb, Metal Standing w/ Adjustable",
+        "title": "Keazile Pangea 61 in. Walnut Tripod 1-Light Floor Lamp with Solid wood Body and White Fabric Drum Shade",
         "store": "The Home Depot",
-        "price": "$35.99",
-        "url": "https://www.homedepot.com/p/SUNMORY-62in-Black-Arc-Floor-Lamp-Modern-Floor-Lamp-with-9W-3-Color-Tempe-Bulb-Metal-Standing-w-Adjustable-Hanging-Lampshade-MF18166A-BK/338778659",
-        "x": 69,
-        "y": 34
-      },
-      {
-        "name": "Wall art",
-        "title": "Kate and Laurel 2-Piece Sylvie \"Rhythmic Lines I and II\" by Nikita Jariwala Abstract Framed Art Print Set 24 i",
-        "store": "Home Depot",
-        "price": "$109.99",
-        "url": "https://www.homedepot.com/p/Kate-and-Laurel-2-Piece-Sylvie-Rhythmic-Lines-I-and-II-by-Nikita-Jariwala-Abstract-Framed-Art-Print-Set-24-in-x-18-in-10197047/341049030",
-        "x": 89,
-        "y": 27
+        "price": "$99.43",
+        "url": "https://www.homedepot.com/p/Keazile-Pangea-61-in-Walnut-Tripod-1-Light-Floor-Lamp-with-Solid-wood-Body-and-White-Fabric-Drum-Shade-KZ-FL-002-WH-1/335804123",
+        "x": 72,
+        "y": 41
       }
     ]
   },
   {
-    "id": "bedroom",
-    "title": "Bedroom",
+    "id": "living-modern",
+    "room": "living",
+    "title": "Modern living room",
+    "pins": [
+      {
+        "name": "Sofa",
+        "title": "George Oliver Bridgeview Leather Mid Century Modern Upholstered Square Arm Sofa or Loveseat",
+        "store": "Wayfair",
+        "price": "$359.99",
+        "url": "https://www.wayfair.com/furniture/pdp/george-oliver-bridgeview-70-vegan-leather-square-arm-sofa-w004081673.html?piid=1975572771",
+        "x": 80,
+        "y": 58
+      },
+      {
+        "name": "Coffee table",
+        "title": "COSVALVE 42.5\" Rectangular High Gloss Black Marble Coffee Table",
+        "store": "Walmart",
+        "price": "$129.99",
+        "url": "https://www.walmart.com/ip/COSVALVE-42-5-Rectangular-High-Gloss-Black-Marble-Coffee-Table/484671110",
+        "x": 47,
+        "y": 66
+      },
+      {
+        "name": "Area rug",
+        "title": "Woven Honeycomb Indoor/Outdoor Rug",
+        "store": "West Elm",
+        "price": "$599",
+        "url": "https://www.westelm.com/products/702382/",
+        "x": 44,
+        "y": 84
+      }
+    ]
+  },
+  {
+    "id": "bedroom-boho",
+    "room": "bedroom",
+    "title": "Bohemian bedroom",
     "pins": [
       {
         "name": "Bed frame",
-        "title": "Qualler Beige Wood Frame Queen Size Upholstered Platform Bed with Hydraulic Storage System",
-        "store": "Home Depot",
-        "price": "$453.99",
-        "url": "https://www.homedepot.com/p/Qualler-Beige-Wood-Frame-Queen-Size-Upholstered-Platform-Bed-with-Hydraulic-Storage-System-FSLFPB552A/340727055",
-        "x": 34,
+        "title": "VEVELSTAD bed frame with 2 headboards, white/Tolkning rattan, Queen",
+        "store": "IKEA",
+        "price": "$269.00",
+        "url": "https://www.ikea.com/us/en/p/vevelstad-bed-frame-with-2-headboards-white-tolkning-rattan-s89441726/",
+        "x": 31,
         "y": 42
       },
       {
-        "name": "Table lamp",
-        "title": "Wrought Studio™ Josler 26.5\" Table Lamp",
+        "name": "Area rug",
+        "title": "Fitzwater Natural Fiber Hand Woven Jute Solid Color Rug",
         "store": "Wayfair",
-        "price": "$51.99",
-        "url": "https://www.wayfair.com/lighting/pdp/beachcrest-home-melbourne-beach-27-table-lamp-seho2691.html",
-        "x": 54,
-        "y": 45
-      },
-      {
-        "name": "Nightstand",
-        "title": "Latitude Run® Modern Drawer Nightstand - Curved Design With Optimal Storage Balance",
-        "store": "Wayfair",
-        "price": "$359.99",
-        "url": "https://www.wayfair.com/furniture/pdp/latitude-run-modern-drawer-nightstand-curved-design-with-optimal-storage-balance-w115839756.html",
-        "x": 57,
-        "y": 53
+        "price": "$339.99",
+        "url": "https://www.wayfair.com/rugs/pdp/breakwater-bay-fitzwater-natural-fiber-hand-woven-jute-solid-color-rug-w001978108.html?piid=1487308005",
+        "x": 42,
+        "y": 90
       },
       {
         "name": "Duvet set",
-        "title": "West Elm European Flax Linen Duvet Cover Full/Queen & Two Standard Shams ~ White",
-        "store": "Amazon",
-        "price": "$279.00",
-        "url": "https://www.amazon.com/West-Elm-European-Linen-Standard/dp/B09BGPLLH5",
-        "x": 50,
-        "y": 70
+        "title": "100% European Linen Duvet Cover Set in Terracotta",
+        "store": "Quince",
+        "price": "$154.00",
+        "url": "https://www.quince.com/home/belgian-linen-duvet-cover-set?color=terracotta",
+        "x": 51,
+        "y": 62
       }
     ]
   },
   {
-    "id": "office",
-    "title": "Home office",
+    "id": "office-industrial",
+    "room": "office",
+    "title": "Industrial home office",
     "pins": [
       {
         "name": "Desk",
-        "title": "AFI 48 in. Rectangular Walnut Writing Desk with Solid Wood Material",
+        "title": "TECHNI MOBILI 18 in. Rectangular Grey Industrial Writing Desk with Storage",
         "store": "Home Depot",
-        "price": "$133.38",
-        "url": "https://www.homedepot.com/p/AFI-48-in-Rectangular-Walnut-Writing-Desk-with-Solid-Wood-Material-AH11104/304854892",
-        "x": 56.41,
-        "y": 66.86
+        "price": "$120.00",
+        "url": "https://www.homedepot.com/p/TECHNI-MOBILI-18-in-Rectangular-Grey-Industrial-Writing-Desk-with-Storage-RTA-954D-GRY/323524794",
+        "x": 54,
+        "y": 66
       },
       {
         "name": "Bookshelf",
-        "title": "Laurel Foundry Modern Farmhouse® Patrick 68.3\" Tall Bookshelf",
-        "store": "Wayfair",
-        "price": "$119.99",
-        "url": "https://www.wayfair.com/furniture/pdp/union-rustic-kiwako-683-tall-bookshelf-w009706621.html",
-        "x": 86.08,
-        "y": 50.84
+        "title": "Diwhy Industrial Pipe Bookshelf, 6 Layer Rustic Modern Wood Ladder Shelf with Metal Frame, Home Decor, Display",
+        "store": "amazon.com",
+        "price": "$159.00",
+        "url": "https://www.amazon.com/Diwhy-Industrial-Bookcase-Shelving-Bookshelf/dp/B08NWNT247",
+        "x": 84,
+        "y": 51
       }
     ]
   }
