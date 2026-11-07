@@ -1,0 +1,384 @@
+// Waia · "Will it fit? + Budget" module
+// Works without touching app.js: attaches itself when the product list / product dialog appear.
+// Integration: in public/app/index.html <head>:  <script src="./fit.js" type="module"></script>
+// Product size/price data: public/app/fit-data.json
+
+const flow = document.querySelector('#flow');
+const dialog = document.querySelector('#dialog');
+const storageKey = 'waia-fit-v1';
+
+const SOFA_PRESETS = [['Small', 160], ['Medium', 200], ['Large', 240]];
+const CORNER_PRESETS = [['Tight', 30], ['Medium', 45], ['Roomy', 60]];
+// Rule: wall clock diameter = 20–30% of the sofa width below it.
+const CLOCK_MIN = 0.2;
+const CLOCK_MAX = 0.3;
+// Comfortable reading-lamp height next to a sofa (cm).
+const LAMP_MIN = 145;
+const LAMP_MAX = 180;
+
+let data = { currency: '$', defaultBudget: 150, products: {} };
+let roomData = null; // user's room photo (JPEG data URL, memory only)
+let placing = false;
+let state = { sofa: 200, corner: 45, budget: null, selected: {} };
+
+try {
+  const saved = JSON.parse(sessionStorage.getItem(storageKey));
+  if (saved && typeof saved === 'object') state = { ...state, ...saved, selected: { ...(saved.selected || {}) } };
+} catch {}
+
+function save() {
+  try { sessionStorage.setItem(storageKey, JSON.stringify(state)); } catch {}
+}
+
+const num = value => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+const money = value => data.currency + value.toFixed(2);
+const moneyRound = value => data.currency + Math.round(value);
+const budget = () => state.budget ?? data.defaultBudget;
+const clockRange = () => [Math.round(state.sofa * CLOCK_MIN), Math.round(state.sofa * CLOCK_MAX)];
+const maxBase = () => Math.max(0, state.corner - 5);
+
+function verdict(spec) {
+  if (!spec) return null;
+  if (spec.type === 'clock') {
+    const d = num(spec.diameterCm);
+    if (d === null) return { tone: 'unknown', text: 'Check diameter on the product page' };
+    const [min, max] = clockRange();
+    if (d < min) return { tone: 'warn', text: `Ø ${d} cm · may look small on this wall` };
+    if (d > max) return { tone: 'warn', text: `Ø ${d} cm · may be too big for this wall` };
+    return { tone: 'ok', text: `Ø ${d} cm · fits your wall` };
+  }
+  if (spec.type === 'lamp') {
+    const h = num(spec.heightCm);
+    const b = num(spec.baseCm);
+    if (h === null && b === null) return { tone: 'unknown', text: 'Check size on the product page' };
+    if (b !== null && b > maxBase()) return { tone: 'warn', text: `Base ${b} cm · may not fit the corner` };
+    if (h !== null && (h < LAMP_MIN || h > LAMP_MAX)) return { tone: 'warn', text: `${h} cm · ${h < LAMP_MIN ? 'low' : 'tall'} for reading` };
+    return { tone: 'ok', text: [h && `${h} cm`, b && `base ${b} cm`].filter(Boolean).join(' · ') + ' · fits your corner' };
+  }
+  return null;
+}
+
+function selectedTotal() {
+  let total = 0;
+  let missing = 0;
+  for (const asin of Object.values(state.selected)) {
+    const price = num(data.products[asin]?.price);
+    if (price === null) missing++;
+    else total += price;
+  }
+  return { total, missing, count: Object.keys(state.selected).length };
+}
+
+// ---------- Panel (above the product list) ----------
+
+function chips(name, presets, current) {
+  return presets.map(([label, value]) =>
+    `<button type="button" class="fit-chip" data-fit="${name}" data-value="${value}" aria-pressed="${current === value}">${label}<small>${value} cm</small></button>`).join('');
+}
+
+function panelSummary() {
+  const [min, max] = clockRange();
+  return `Clock Ø ${min}–${max} cm · lamp base ≤ ${maxBase()} cm`;
+}
+
+function budgetBar() {
+  const { total, missing, count } = selectedTotal();
+  const limit = budget();
+  const pct = limit > 0 ? Math.min(100, Math.round((total / limit) * 100)) : 0;
+  const over = total > limit;
+  const label = count
+    ? `${money(total)} / ${moneyRound(limit)}${missing ? ` · ${missing} price${missing > 1 ? 's' : ''} missing` : ''}`
+    : `Budget ${moneyRound(limit)} · tap “Pick” on a product`;
+  return `<div class="fit-budget${over ? ' over' : ''}">
+    <div class="fit-budget-row"><span>${over ? 'Over budget' : count ? 'Your picks' : 'Your budget'}</span><strong>${label}</strong></div>
+    <div class="fit-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Budget used"><span style="width:${pct}%"></span></div>
+    ${count ? `<button type="button" class="fit-place" data-place>✦ See my picks in ${roomData ? 'my room' : 'this room'} <span aria-hidden="true">→</span></button>` : ''}
+  </div>`;
+}
+
+function roomField() {
+  return `<div class="fit-field"><span class="fit-label">Your room</span>
+    <label class="fit-upload">
+      <input type="file" accept="image/*" data-room-upload class="sr-only">
+      ${roomData ? `<img src="${roomData}" alt="Your uploaded room" class="fit-room-thumb">` : '<span class="fit-upload-icon" aria-hidden="true">📷</span>'}
+      <span><strong>${roomData ? 'Photo ready · change' : 'Upload a photo of your room'}</strong><small>${roomData ? 'Your picks will be placed into this photo.' : 'Without a photo we use the sample living room.'}</small></span>
+    </label></div>`;
+}
+
+function panelHTML() {
+  return `<details class="fit-panel">
+    <summary><span class="fit-ruler" aria-hidden="true">📏</span><span><strong>Will it fit? Size it to your room</strong><small class="fit-summary">${panelSummary()}</small></span><span class="fit-caret" aria-hidden="true">▾</span></summary>
+    <div class="fit-body">
+      <div class="fit-room-slot">${roomField()}</div>
+      <div class="fit-field"><span class="fit-label">Sofa width</span><div class="fit-chips">${chips('sofa', SOFA_PRESETS, state.sofa)}</div>
+        <label class="fit-input">or <input type="number" inputmode="numeric" min="80" max="400" data-fit-input="sofa" value="${state.sofa}"> cm</label></div>
+      <div class="fit-field"><span class="fit-label">Space beside the sofa</span><div class="fit-chips">${chips('corner', CORNER_PRESETS, state.corner)}</div></div>
+      <div class="fit-field"><span class="fit-label">Budget</span>
+        <label class="fit-input">${data.currency} <input type="number" inputmode="numeric" min="0" max="100000" data-fit-input="budget" value="${budget()}"></label></div>
+      <p class="fit-rule">Rule of thumb: a wall clock should be 20–30% of the sofa width. A lamp base should leave 5 cm of room in the corner.</p>
+    </div>
+  </details>
+  <div class="fit-budget-slot">${budgetBar()}</div>`;
+}
+
+function ensurePanel() {
+  for (const list of flow.querySelectorAll('.product-list')) {
+    if (list.previousElementSibling?.classList.contains('fit-budget-slot')) continue;
+    list.insertAdjacentHTML('beforebegin', panelHTML());
+  }
+}
+
+function refreshPanels() {
+  for (const el of document.querySelectorAll('.fit-summary')) el.textContent = panelSummary();
+  for (const slot of document.querySelectorAll('.fit-budget-slot')) slot.innerHTML = budgetBar();
+  for (const chip of document.querySelectorAll('.fit-chip')) {
+    chip.setAttribute('aria-pressed', String(Number(chip.dataset.value) === state[chip.dataset.fit]));
+  }
+  for (const input of document.querySelectorAll('[data-fit-input="sofa"]')) {
+    if (document.activeElement !== input) input.value = state.sofa;
+  }
+  enhanceDialog(true);
+}
+
+// ---------- Product dialog ----------
+
+function asinOf(card) {
+  const link = card.querySelector('a[href*="/dp/"]');
+  return link?.getAttribute('href').match(/\/dp\/([A-Z0-9]{10})/)?.[1] ?? null;
+}
+
+function enhanceDialog(force = false) {
+  for (const card of dialog.querySelectorAll('.product-card')) {
+    const asin = asinOf(card);
+    if (!asin) continue;
+    const spec = data.products[asin];
+    let meta = card.querySelector('.fit-meta');
+    if (meta && !force) continue;
+    if (!meta) {
+      meta = document.createElement('div');
+      meta.className = 'fit-meta';
+      card.querySelector('div')?.append(meta);
+    }
+    const v = verdict(spec);
+    const price = num(spec?.price);
+    const type = spec?.type;
+    const picked = type && state.selected[type] === asin;
+    meta.innerHTML = `${v ? `<span class="fit-badge ${v.tone}">${v.tone === 'ok' ? '✓ ' : v.tone === 'warn' ? '⚠ ' : ''}${v.text}</span>` : ''}
+      ${price !== null ? `<span class="fit-price">${money(price)}</span>` : ''}
+      ${type ? `<button type="button" class="fit-pick" data-pick="${asin}" data-type="${type}" aria-pressed="${picked}">${picked ? '✓ Picked' : 'Pick'}</button>` : ''}`;
+  }
+  const slot = dialog.querySelector('.fit-dialog-budget');
+  if (dialog.querySelector('.product-card')) {
+    if (slot) slot.innerHTML = budgetBar();
+    else dialog.querySelector('.shopping-note')?.insertAdjacentHTML('beforebegin', `<div class="fit-dialog-budget">${budgetBar()}</div>`);
+  }
+}
+
+// ---------- Place products into the room (fal, server-side /api/place) ----------
+
+function toJpeg(src, max = 1280) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => reject(new Error('Could not read the image'));
+    img.src = src;
+  });
+}
+
+async function readUpload(file) {
+  const url = URL.createObjectURL(file);
+  try { return await toJpeg(url); } finally { URL.revokeObjectURL(url); }
+}
+
+const escapeHTML = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function showDialog(html) {
+  dialog.innerHTML = `<button class="round dialog-close" data-close aria-label="Kapat">×</button>${html}`;
+  if (!dialog.open) dialog.showModal();
+}
+
+async function placeSelected() {
+  if (placing) return;
+  const asins = Object.values(state.selected);
+  if (!asins.length) return;
+  placing = true;
+  const usingDemo = !roomData;
+  showDialog(`<span class="eyebrow"><span class="dot"></span> SEE IT IN YOUR ROOM</span>
+    <h2 id="dialog-title">Preparing your room…</h2>
+    <p>Placing your ${asins.length} pick${asins.length > 1 ? 's' : ''} into ${usingDemo ? 'the sample living room' : 'your photo'} at real size. This takes about 10–30 seconds.</p>
+    <div class="fit-loading" aria-live="polite"><span></span></div>`);
+  try {
+    const before = roomData || await toJpeg(new URL('./assets/room-before.webp', location.href).href);
+    const response = await fetch(new URL('./api/place', location.href), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ image: before, asins, sofaCm: state.sofa }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.image) throw new Error(result.error || 'Server error (' + response.status + ')');
+    const items = result.products.map(p => {
+      const price = num(data.products[p.asin]?.price);
+      return `<li><span><strong>${escapeHTML(p.brand || '')}</strong><small>${escapeHTML(data.products[p.asin]?.label || p.name || p.type)}${price !== null ? ' · ' + money(price) : ''}</small></span>
+        <a class="product-detail" href="https://www.amazon.com/dp/${p.asin}" target="_blank" rel="noopener noreferrer">View product ↗</a></li>`;
+    }).join('');
+    const { total, missing } = selectedTotal();
+    showDialog(`<span class="eyebrow"><span class="dot"></span> SEE IT IN YOUR ROOM</span>
+      <h2 id="dialog-title">Your picks, in your room.</h2>
+      <div class="fit-result">
+        <img src="${escapeHTML(result.image)}" alt="Room with your picked products placed in it" data-after>
+        <img src="${before}" alt="Room before" data-before hidden>
+        <div class="fit-result-switch" role="group" aria-label="Before and after">
+          <button type="button" data-result-view="before" aria-pressed="false">Before</button>
+          <button type="button" data-result-view="after" aria-pressed="true">After</button>
+        </div>
+      </div>
+      <ul class="fit-result-list">${items}</ul>
+      <div class="fit-budget"><div class="fit-budget-row"><span>Total</span><strong>${missing ? 'See prices on the product pages' : money(total) + ' / ' + moneyRound(budget())}</strong></div></div>
+      <p class="shopping-note">${result.products.every(p => p.usedReference)
+        ? 'Placed from the real product photos · AI preview by fal.'
+        : 'Similar look · AI preview by fal.'} Check size and price on the product page.</p>`);
+  } catch (error) {
+    showDialog(`<span class="eyebrow"><span class="dot"></span> SEE IT IN YOUR ROOM</span>
+      <h2 id="dialog-title">We couldn’t create it right now.</h2>
+      <p>${escapeHTML(error.message)}</p>
+      <button class="primary" data-place>Try again <span>↻</span></button>`);
+  } finally {
+    placing = false;
+  }
+}
+
+// ---------- Events ----------
+
+document.addEventListener('change', async event => {
+  const input = event.target.closest('[data-room-upload]');
+  if (!input?.files?.[0]) return;
+  try {
+    roomData = await readUpload(input.files[0]);
+  } catch {
+    roomData = null;
+  }
+  for (const slot of document.querySelectorAll('.fit-room-slot')) slot.innerHTML = roomField();
+  refreshPanels();
+});
+
+document.addEventListener('click', event => {
+  if (event.target.closest('[data-place]')) {
+    placeSelected();
+    return;
+  }
+  const view = event.target.closest('[data-result-view]');
+  if (view) {
+    const after = view.dataset.resultView === 'after';
+    dialog.querySelector('[data-after]').hidden = !after;
+    dialog.querySelector('[data-before]').hidden = after;
+    for (const b of dialog.querySelectorAll('[data-result-view]')) b.setAttribute('aria-pressed', String(b === view));
+  }
+});
+
+document.addEventListener('click', event => {
+  const chip = event.target.closest('.fit-chip');
+  if (chip) {
+    state[chip.dataset.fit] = Number(chip.dataset.value);
+    save();
+    refreshPanels();
+    return;
+  }
+  const pick = event.target.closest('.fit-pick');
+  if (pick) {
+    const { type, pick: asin } = pick.dataset;
+    if (state.selected[type] === asin) delete state.selected[type];
+    else state.selected[type] = asin;
+    save();
+    refreshPanels();
+  }
+});
+
+document.addEventListener('input', event => {
+  const input = event.target.closest('[data-fit-input]');
+  if (!input) return;
+  const value = Number(input.value);
+  if (!Number.isFinite(value) || value <= 0) return;
+  if (input.dataset.fitInput === 'sofa' && (value < 80 || value > 400)) return;
+  state[input.dataset.fitInput] = value;
+  save();
+  refreshPanels();
+});
+
+// ---------- Styles ----------
+
+const css = `
+.fit-panel { margin-top: 12px; border: 1px solid var(--line, #e8ddd0); border-radius: 12px; background: var(--card, #fffdf8); }
+.fit-panel summary { list-style: none; display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+.fit-panel summary::-webkit-details-marker { display: none; }
+.fit-ruler { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blush, #f8ebe2); font-size: 15px; }
+.fit-panel summary strong { display: block; font-size: 13px; }
+.fit-panel summary small { display: block; color: var(--muted, #6c655a); font-size: 11px; }
+.fit-caret { color: var(--rust-dark, #913722); transition: transform .2s; }
+.fit-panel[open] .fit-caret { transform: rotate(180deg); }
+.fit-body { padding: 0 12px 12px; display: grid; gap: 10px; }
+.fit-label { display: block; font-size: 10px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; color: var(--rust-dark, #913722); margin-bottom: 5px; }
+.fit-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.fit-chip { border: 1px solid var(--line, #e8ddd0); background: var(--paper, #f9f5ee); border-radius: 10px; padding: 6px 4px; font-size: 12px; font-weight: 650; line-height: 1.2; }
+.fit-chip small { display: block; font-weight: 400; color: var(--muted, #6c655a); font-size: 10px; }
+.fit-chip[aria-pressed="true"] { border-color: var(--rust, #ad462f); background: var(--blush, #f8ebe2); color: var(--rust-dark, #913722); }
+.fit-input { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--muted, #6c655a); }
+.fit-input input { width: 84px; padding: 5px 8px; border: 1px solid var(--line, #e8ddd0); border-radius: 8px; background: #fff; color: var(--ink, #25251d); }
+.fit-rule { margin: 0; font-size: 11px; color: var(--muted, #6c655a); }
+.fit-budget { margin-top: 8px; padding: 9px 12px; border-radius: 12px; background: var(--blush, #f8ebe2); border: 1px solid #efd9cd; }
+.fit-budget-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: #593d33; }
+.fit-budget-row strong { font-size: 12px; text-align: right; }
+.fit-track { height: 6px; margin-top: 6px; border-radius: 99px; background: #f0d6c8; overflow: hidden; }
+.fit-track span { display: block; height: 100%; border-radius: inherit; background: var(--rust, #ad462f); transition: width .3s; }
+.fit-budget.over .fit-track span { background: #c0392b; }
+.fit-budget.over .fit-budget-row { color: #c0392b; }
+.fit-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 8px; margin-top: 5px; }
+.fit-badge { font-size: 10.5px; font-weight: 650; padding: 2px 7px; border-radius: 99px; }
+.fit-badge.ok { background: #e3f1e4; color: #2f6b36; }
+.fit-badge.warn { background: #fdf0d8; color: #8a5a00; }
+.fit-badge.unknown { background: #efeae2; color: var(--muted, #6c655a); }
+.fit-price { font-size: 12px; font-weight: 750; }
+.fit-pick { border: 1px solid var(--rust, #ad462f); color: var(--rust-dark, #913722); background: transparent; border-radius: 99px; padding: 1px 10px; font-size: 11px; font-weight: 700; }
+.fit-pick[aria-pressed="true"] { background: var(--rust, #ad462f); color: #fff; }
+.fit-dialog-budget .fit-budget { margin-top: 10px; }
+.fit-place { display: flex; width: 100%; justify-content: center; align-items: center; gap: 8px; margin-top: 9px; padding: 9px 12px; border: 0; border-radius: 99px; background: var(--rust, #ad462f); color: #fff; font-size: 13px; font-weight: 750; }
+.fit-place:hover { background: var(--rust-dark, #913722); }
+.fit-upload { display: grid; grid-template-columns: 44px minmax(0,1fr); align-items: center; gap: 10px; padding: 8px; border: 1px dashed var(--rust, #ad462f); border-radius: 10px; background: var(--paper, #f9f5ee); cursor: pointer; }
+.fit-upload strong { display: block; font-size: 12.5px; }
+.fit-upload small { display: block; font-size: 11px; color: var(--muted, #6c655a); }
+.fit-upload-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; background: var(--blush, #f8ebe2); font-size: 20px; }
+.fit-room-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; }
+.fit-upload:has(input:focus-visible) { outline: 2px solid var(--rust-dark, #913722); outline-offset: 3px; }
+.fit-loading { height: 6px; margin-top: 14px; border-radius: 99px; background: #f0d6c8; overflow: hidden; }
+.fit-loading span { display: block; width: 35%; height: 100%; border-radius: inherit; background: var(--rust, #ad462f); animation: fit-slide 1.2s ease-in-out infinite; }
+@keyframes fit-slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+.fit-result { position: relative; margin-top: 10px; border-radius: 12px; overflow: hidden; background: #eee6da; }
+.fit-result img { width: 100%; height: auto; }
+.fit-result img[hidden] { display: none; }
+.fit-result-switch { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 4px; padding: 3px; border-radius: 99px; background: #fffdf8e6; }
+.fit-result-switch button { border: 0; background: transparent; border-radius: 99px; padding: 4px 12px; font-size: 12px; font-weight: 700; }
+.fit-result-switch button[aria-pressed="true"] { background: var(--rust, #ad462f); color: #fff; }
+.fit-result-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.fit-result-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line, #e8ddd0); border-radius: 10px; }
+.fit-result-list strong { display: block; font-size: 13px; }
+.fit-result-list small { display: block; font-size: 11px; color: var(--muted, #6c655a); }
+`;
+document.head.insertAdjacentHTML('beforeend', `<style id="fit-style">${css}</style>`);
+
+// ---------- Start ----------
+
+new MutationObserver(ensurePanel).observe(flow, { childList: true, subtree: true });
+new MutationObserver(() => enhanceDialog()).observe(dialog, { childList: true });
+
+try {
+  const response = await fetch(new URL('./fit-data.json', import.meta.url), { cache: 'no-store' });
+  if (response.ok) data = { ...data, ...(await response.json()) };
+} catch {}
+ensurePanel();
+refreshPanels();
