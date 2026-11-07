@@ -1,3 +1,5 @@
+import { handlePlace } from './api/place.mjs';
+
 export default {
   fetch(request, env) {
     const url = new URL(request.url);
@@ -7,6 +9,7 @@ export default {
     }
 
     url.pathname = url.pathname.replace(/^\/onboarding\//, '/');
+    if (url.pathname === '/api/place') return handlePlace(request, env);
     if (url.pathname === '/') url.pathname = '/index.html';
     return env.ASSETS.fetch(new Request(url, request));
   },

@@ -1,11 +1,41 @@
 {
-  "_note": "Değerleri ürün sayfasından elle doldurun. null kalan alan arayüzde 'ürün sayfasında kontrol et' olarak görünür. Fiyatlar değişebilir.",
+  "_note": "Ölçü, fiyat ve imageUrl değerlerini ürün sayfasından elle doldurun (imageUrl: Amazon ürün görselinde sağ tık > Resim adresini kopyala, m.media-amazon.com/...). null kalan alanlar arayüzde 'kontrol et' olarak görünür; imageUrl yoksa fal ürünü yalnızca tarifle çizer.",
   "currency": "$",
   "defaultBudget": 150,
   "products": {
-    "B0CMX5HD16": { "type": "clock", "diameterCm": null, "price": null },
-    "B01HONVHZ2": { "type": "clock", "diameterCm": null, "price": null },
-    "B0797FYNGF": { "type": "lamp", "heightCm": null, "baseCm": null, "price": null },
-    "B078YR2WYQ": { "type": "lamp", "heightCm": null, "baseCm": null, "price": null }
+    "B0CMX5HD16": {
+      "type": "clock",
+      "brand": "Jomparis",
+      "name": "silent analog wall clock",
+      "diameterCm": null,
+      "price": null,
+      "imageUrl": null
+    },
+    "B01HONVHZ2": {
+      "type": "clock",
+      "brand": "Bernhard Products",
+      "name": "classic analog wall clock",
+      "diameterCm": null,
+      "price": null,
+      "imageUrl": null
+    },
+    "B0797FYNGF": {
+      "type": "lamp",
+      "brand": "Brightech",
+      "name": "floor reading lamp",
+      "heightCm": null,
+      "baseCm": null,
+      "price": null,
+      "imageUrl": null
+    },
+    "B078YR2WYQ": {
+      "type": "lamp",
+      "brand": "LEPOWER",
+      "name": "floor lamp with fabric drum shade",
+      "heightCm": null,
+      "baseCm": null,
+      "price": null,
+      "imageUrl": null
+    }
   }
 }

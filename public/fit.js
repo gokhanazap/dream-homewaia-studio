@@ -17,6 +17,8 @@ const LAMP_MIN = 145;
 const LAMP_MAX = 180;
 
 let data = { currency: '$', defaultBudget: 150, products: {} };
+let roomData = null; // kullanıcının yüklediği oda fotoğrafı (JPEG data URL, yalnızca bellekte)
+let placing = false;
 let state = { sofa: 200, corner: 45, budget: null, selected: {} };
 
 try {
@@ -90,13 +92,24 @@ function budgetBar() {
   return `<div class="fit-budget${over ? ' over' : ''}">
     <div class="fit-budget-row"><span>${over ? 'Bütçeyi aşıyor' : count ? 'Seçtiklerin' : 'Bütçen'}</span><strong>${label}</strong></div>
     <div class="fit-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Bütçe kullanımı"><span style="width:${pct}%"></span></div>
+    ${count ? `<button type="button" class="fit-place" data-place>✦ Seçtiklerimi ${roomData ? 'odamda' : 'bu odada'} gör <span aria-hidden="true">→</span></button>` : ''}
   </div>`;
+}
+
+function roomField() {
+  return `<div class="fit-field"><span class="fit-label">Odan</span>
+    <label class="fit-upload">
+      <input type="file" accept="image/*" data-room-upload class="sr-only">
+      ${roomData ? `<img src="${roomData}" alt="Yüklediğin oda" class="fit-room-thumb">` : '<span class="fit-upload-icon" aria-hidden="true">📷</span>'}
+      <span><strong>${roomData ? 'Fotoğraf hazır · değiştir' : 'Kendi odanın fotoğrafını yükle'}</strong><small>${roomData ? 'Seçtiğin ürünler bu fotoğrafa yerleştirilecek.' : 'Yüklemezsen örnek salon kullanılır.'}</small></span>
+    </label></div>`;
 }
 
 function panelHTML() {
   return `<details class="fit-panel">
     <summary><span class="fit-ruler" aria-hidden="true">📏</span><span><strong>Sığar mı? Odana göre ayarla</strong><small class="fit-summary">${panelSummary()}</small></span><span class="fit-caret" aria-hidden="true">▾</span></summary>
     <div class="fit-body">
+      <div class="fit-room-slot">${roomField()}</div>
       <div class="fit-field"><span class="fit-label">Koltuk genişliği</span><div class="fit-chips">${chips('sofa', SOFA_PRESETS, state.sofa)}</div>
         <label class="fit-input">veya <input type="number" inputmode="numeric" min="80" max="400" data-fit-input="sofa" value="${state.sofa}"> cm</label></div>
       <div class="fit-field"><span class="fit-label">Koltuk yanındaki boşluk</span><div class="fit-chips">${chips('corner', CORNER_PRESETS, state.corner)}</div></div>
@@ -161,7 +174,111 @@ function enhanceDialog(force = false) {
   }
 }
 
+// ---------- Ürünü odaya yerleştir (fal, sunucu tarafı /api/place) ----------
+
+function toJpeg(src, max = 1280) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * scale);
+      canvas.height = Math.round(img.naturalHeight * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => reject(new Error('Görsel okunamadı'));
+    img.src = src;
+  });
+}
+
+async function readUpload(file) {
+  const url = URL.createObjectURL(file);
+  try { return await toJpeg(url); } finally { URL.revokeObjectURL(url); }
+}
+
+const escapeHTML = text => String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+function showDialog(html) {
+  dialog.innerHTML = `<button class="round dialog-close" data-close aria-label="Kapat">×</button>${html}`;
+  if (!dialog.open) dialog.showModal();
+}
+
+async function placeSelected() {
+  if (placing) return;
+  const asins = Object.values(state.selected);
+  if (!asins.length) return;
+  placing = true;
+  const usingDemo = !roomData;
+  showDialog(`<span class="eyebrow"><span class="dot"></span> ODANDA GÖR</span>
+    <h2 id="dialog-title">Odan hazırlanıyor…</h2>
+    <p>Seçtiğin ${asins.length} ürün, ${usingDemo ? 'örnek salona' : 'fotoğrafına'} gerçek ölçüsüyle yerleştiriliyor. Bu 10–30 sn sürebilir.</p>
+    <div class="fit-loading" aria-live="polite"><span></span></div>`);
+  try {
+    const before = roomData || await toJpeg(new URL('./assets/room-before.webp', location.href).href);
+    const response = await fetch(new URL('./api/place', location.href), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ image: before, asins, sofaCm: state.sofa }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.image) throw new Error(result.error || 'Sunucu hatası (' + response.status + ')');
+    const items = result.products.map(p => {
+      const price = num(data.products[p.asin]?.price);
+      return `<li><span><strong>${escapeHTML(p.brand || '')}</strong><small>${escapeHTML(p.name || p.type)}${price !== null ? ' · ' + money(price) : ''}</small></span>
+        <a class="product-detail" href="https://www.amazon.com/dp/${p.asin}" target="_blank" rel="noopener noreferrer">Ürünü gör ↗</a></li>`;
+    }).join('');
+    const { total, missing } = selectedTotal();
+    showDialog(`<span class="eyebrow"><span class="dot"></span> ODANDA GÖR</span>
+      <h2 id="dialog-title">Seçtiklerin odanda.</h2>
+      <div class="fit-result">
+        <img src="${escapeHTML(result.image)}" alt="Seçilen ürünlerin yerleştirildiği oda" data-after>
+        <img src="${before}" alt="Odanın ilk hâli" data-before hidden>
+        <div class="fit-result-switch" role="group" aria-label="Önce ve sonra">
+          <button type="button" data-result-view="before" aria-pressed="false">Önce</button>
+          <button type="button" data-result-view="after" aria-pressed="true">Sonra</button>
+        </div>
+      </div>
+      <ul class="fit-result-list">${items}</ul>
+      <div class="fit-budget"><div class="fit-budget-row"><span>Toplam</span><strong>${missing ? 'Fiyatı ürün sayfasında gör' : money(total) + ' / ' + moneyRound(budget())}</strong></div></div>
+      <p class="shopping-note">Yapay zekâ önizlemesi (fal). Ürün görünümü yaklaşık olabilir; ölçü ve fiyatı ürün sayfasında doğrula.</p>`);
+  } catch (error) {
+    showDialog(`<span class="eyebrow"><span class="dot"></span> ODANDA GÖR</span>
+      <h2 id="dialog-title">Şu an oluşturulamadı.</h2>
+      <p>${escapeHTML(error.message)}</p>
+      <button class="primary" data-place>Tekrar dene <span>↻</span></button>`);
+  } finally {
+    placing = false;
+  }
+}
+
 // ---------- Olaylar ----------
+
+document.addEventListener('change', async event => {
+  const input = event.target.closest('[data-room-upload]');
+  if (!input?.files?.[0]) return;
+  try {
+    roomData = await readUpload(input.files[0]);
+  } catch {
+    roomData = null;
+  }
+  for (const slot of document.querySelectorAll('.fit-room-slot')) slot.innerHTML = roomField();
+  refreshPanels();
+});
+
+document.addEventListener('click', event => {
+  if (event.target.closest('[data-place]')) {
+    placeSelected();
+    return;
+  }
+  const view = event.target.closest('[data-result-view]');
+  if (view) {
+    const after = view.dataset.resultView === 'after';
+    dialog.querySelector('[data-after]').hidden = !after;
+    dialog.querySelector('[data-before]').hidden = after;
+    for (const b of dialog.querySelectorAll('[data-result-view]')) b.setAttribute('aria-pressed', String(b === view));
+  }
+});
 
 document.addEventListener('click', event => {
   const chip = event.target.closest('.fit-chip');
@@ -228,6 +345,26 @@ const css = `
 .fit-pick { border: 1px solid var(--rust, #ad462f); color: var(--rust-dark, #913722); background: transparent; border-radius: 99px; padding: 1px 10px; font-size: 11px; font-weight: 700; }
 .fit-pick[aria-pressed="true"] { background: var(--rust, #ad462f); color: #fff; }
 .fit-dialog-budget .fit-budget { margin-top: 10px; }
+.fit-place { display: flex; width: 100%; justify-content: center; align-items: center; gap: 8px; margin-top: 9px; padding: 9px 12px; border: 0; border-radius: 99px; background: var(--rust, #ad462f); color: #fff; font-size: 13px; font-weight: 750; }
+.fit-place:hover { background: var(--rust-dark, #913722); }
+.fit-upload { display: grid; grid-template-columns: 44px minmax(0,1fr); align-items: center; gap: 10px; padding: 8px; border: 1px dashed var(--rust, #ad462f); border-radius: 10px; background: var(--paper, #f9f5ee); cursor: pointer; }
+.fit-upload strong { display: block; font-size: 12.5px; }
+.fit-upload small { display: block; font-size: 11px; color: var(--muted, #6c655a); }
+.fit-upload-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 8px; background: var(--blush, #f8ebe2); font-size: 20px; }
+.fit-room-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; }
+.fit-upload:has(input:focus-visible) { outline: 2px solid var(--rust-dark, #913722); outline-offset: 3px; }
+.fit-loading { height: 6px; margin-top: 14px; border-radius: 99px; background: #f0d6c8; overflow: hidden; }
+.fit-loading span { display: block; width: 35%; height: 100%; border-radius: inherit; background: var(--rust, #ad462f); animation: fit-slide 1.2s ease-in-out infinite; }
+@keyframes fit-slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+.fit-result { position: relative; margin-top: 10px; border-radius: 12px; overflow: hidden; background: #eee6da; }
+.fit-result img { width: 100%; height: auto; }
+.fit-result-switch { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 4px; padding: 3px; border-radius: 99px; background: #fffdf8e6; }
+.fit-result-switch button { border: 0; background: transparent; border-radius: 99px; padding: 4px 12px; font-size: 12px; font-weight: 700; }
+.fit-result-switch button[aria-pressed="true"] { background: var(--rust, #ad462f); color: #fff; }
+.fit-result-list { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.fit-result-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--line, #e8ddd0); border-radius: 10px; }
+.fit-result-list strong { display: block; font-size: 13px; }
+.fit-result-list small { display: block; font-size: 11px; color: var(--muted, #6c655a); }
 `;
 document.head.insertAdjacentHTML('beforeend', `<style id="fit-style">${css}</style>`);
 
