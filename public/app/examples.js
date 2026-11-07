@@ -5,13 +5,22 @@ export const EXAMPLES = [
     "title": "Living room",
     "pins": [
       {
+        "name": "Sofa",
+        "title": "Best Selling Home Decor Jason 72.25-in W Midcentury Gray 3-seater Sofa",
+        "store": "Lowe's",
+        "price": "$519.87",
+        "url": "https://www.lowes.com/pd/Best-Selling-Home-Decor-Jason-Mid-Century-Modern-Tufted-Fabric-Sofa-Gray/5000264387",
+        "x": 78,
+        "y": 72
+      },
+      {
         "name": "Area rug",
         "title": "George Oliver Diana Geometric Gray & Cream Indoor / Outdoor Area Rug 5x7 - ( 5'3'' x 7'3'' )",
         "store": "Wayfair",
         "price": "$91.99",
         "url": "https://www.wayfair.com/rugs/pdp/george-oliver-diana-geometric-gray-cream-indoor-outdoor-area-rug-5x7-53-x-73-w112908820.html",
-        "x": 42,
-        "y": 83
+        "x": 46,
+        "y": 80
       },
       {
         "name": "Floor lamp",
@@ -19,8 +28,8 @@ export const EXAMPLES = [
         "store": "The Home Depot",
         "price": "$35.99",
         "url": "https://www.homedepot.com/p/SUNMORY-62in-Black-Arc-Floor-Lamp-Modern-Floor-Lamp-with-9W-3-Color-Tempe-Bulb-Metal-Standing-w-Adjustable-Hanging-Lampshade-MF18166A-BK/338778659",
-        "x": 31,
-        "y": 30
+        "x": 69,
+        "y": 34
       },
       {
         "name": "Wall art",
@@ -28,7 +37,7 @@ export const EXAMPLES = [
         "store": "Home Depot",
         "price": "$109.99",
         "url": "https://www.homedepot.com/p/Kate-and-Laurel-2-Piece-Sylvie-Rhythmic-Lines-I-and-II-by-Nikita-Jariwala-Abstract-Framed-Art-Print-Set-24-in-x-18-in-10197047/341049030",
-        "x": 87,
+        "x": 89,
         "y": 27
       }
     ]
@@ -43,7 +52,7 @@ export const EXAMPLES = [
         "store": "Home Depot",
         "price": "$453.99",
         "url": "https://www.homedepot.com/p/Qualler-Beige-Wood-Frame-Queen-Size-Upholstered-Platform-Bed-with-Hydraulic-Storage-System-FSLFPB552A/340727055",
-        "x": 27,
+        "x": 34,
         "y": 42
       },
       {
@@ -52,8 +61,8 @@ export const EXAMPLES = [
         "store": "Wayfair",
         "price": "$51.99",
         "url": "https://www.wayfair.com/lighting/pdp/beachcrest-home-melbourne-beach-27-table-lamp-seho2691.html",
-        "x": 52,
-        "y": 38
+        "x": 54,
+        "y": 45
       },
       {
         "name": "Nightstand",
@@ -61,8 +70,17 @@ export const EXAMPLES = [
         "store": "Wayfair",
         "price": "$359.99",
         "url": "https://www.wayfair.com/furniture/pdp/latitude-run-modern-drawer-nightstand-curved-design-with-optimal-storage-balance-w115839756.html",
-        "x": 54,
-        "y": 55
+        "x": 57,
+        "y": 53
+      },
+      {
+        "name": "Duvet set",
+        "title": "West Elm European Flax Linen Duvet Cover Full/Queen & Two Standard Shams ~ White",
+        "store": "Amazon",
+        "price": "$279.00",
+        "url": "https://www.amazon.com/West-Elm-European-Linen-Standard/dp/B09BGPLLH5",
+        "x": 50,
+        "y": 70
       }
     ]
   },
@@ -76,8 +94,8 @@ export const EXAMPLES = [
         "store": "Home Depot",
         "price": "$133.38",
         "url": "https://www.homedepot.com/p/AFI-48-in-Rectangular-Walnut-Writing-Desk-with-Solid-Wood-Material-AH11104/304854892",
-        "x": 56,
-        "y": 66
+        "x": 56.41,
+        "y": 66.86
       },
       {
         "name": "Bookshelf",
@@ -85,8 +103,8 @@ export const EXAMPLES = [
         "store": "Wayfair",
         "price": "$119.99",
         "url": "https://www.wayfair.com/furniture/pdp/union-rustic-kiwako-683-tall-bookshelf-w009706621.html",
-        "x": 84,
-        "y": 50
+        "x": 86.08,
+        "y": 50.84
       }
     ]
   }
