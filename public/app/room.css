@@ -1,0 +1,38 @@
+.room-start { display: grid; gap: 10px; margin-bottom: 14px; }
+.room-upload { display: flex; justify-content: center; align-items: center; cursor: pointer; }
+.room-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.room-working {
+  position: absolute; inset: auto 12px 12px; padding: 9px 12px; text-align: center;
+  color: #fffaf6; background: #25251dcc; border-radius: 12px; font-size: 13px;
+}
+.room-chat { display: grid; gap: 8px; max-height: 280px; margin: 14px 0 10px; overflow-y: auto; }
+.room-message { max-width: 86%; margin: 0; padding: 9px 12px; border-radius: 14px; font-size: 14px; }
+.room-message.waia { justify-self: start; background: var(--card); border: 1px solid var(--line); }
+.room-message.you { justify-self: end; color: #fffaf6; background: var(--rust); }
+.room-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+.room-chips button {
+  min-height: 36px; padding: 6px 12px; font-size: 13px; color: var(--rust-dark);
+  background: var(--blush); border: 0; border-radius: 999px;
+}
+.room-composer { display: flex; gap: 8px; align-items: center; }
+.room-composer input {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 14px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+}
+.room-item { margin-bottom: 22px; }
+.room-item h2, .room-heading { margin: 0 0 4px; font: 600 20px/1.3 var(--serif); }
+.room-item > p, .room-empty { margin: 0 0 10px; color: var(--muted); }
+.room-heading { margin-top: 20px; }
+.room-product {
+  display: grid; gap: 10px; padding: 13px; margin-bottom: 8px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+}
+.room-product small { display: block; margin-top: 2px; color: var(--muted); }
+.room-product-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.room-save { min-height: 36px; padding: 5px 13px; background: transparent; border: 1px solid var(--line); border-radius: 999px; }
+.room-save[aria-pressed=true] { color: var(--rust-dark); background: var(--blush); border-color: var(--blush); }
+.room-thumbs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.room-thumb { padding: 0; overflow: hidden; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.room-thumb img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.room-thumb span { display: block; padding: 8px 10px; font-size: 13px; }
+.room-saved a { color: var(--rust-dark); text-align: right; }

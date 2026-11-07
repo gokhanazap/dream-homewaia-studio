@@ -1,3 +1,5 @@
+import { mountRoom } from './room.js';
+
 const flow = document.querySelector('#flow');
 const dialog = document.querySelector('#dialog');
 
@@ -10,7 +12,6 @@ function readDemoContext() {
 }
 
 const demoContext = readDemoContext();
-const planLabel = { weekly: 'Weekly demo plan', annual: 'Yearly demo plan' }[demoContext.plan] || 'Free demo';
 
 const catalog = {
   clock: {
@@ -101,17 +102,20 @@ function appScreen() {
   const navigation = tabs.map(([id, label, icon]) => `<button data-tab="${id}" aria-controls="app-${id}" aria-pressed="${id === 'design'}"><span aria-hidden="true">${icon}</span>${label}</button>`).join('');
   return `<div class="flow-body app-body">
     <section id="app-design" data-app-panel="design">
-      <header class="intro"><h1 tabindex="-1">Complete <em>this living room.</em></h1><div class="ornament" aria-hidden="true">✦</div><p>See how a wall clock and a floor lamp can finish a room.</p></header>
-      ${roomDemo()}
+      <header class="intro"><h1 tabindex="-1">Complete <em>your room.</em></h1><div class="ornament" aria-hidden="true">✦</div><p>Show us the room, tell us what you want, and shop the pieces.</p></header>
+      <div id="room-design"></div>
     </section>
     <section id="app-products" data-app-panel="products" hidden>
-      <header class="intro"><h1 tabindex="-1">Shop <em>the room.</em></h1><div class="ornament" aria-hidden="true">✦</div><p>Explore two Amazon picks for each piece added to this room.</p></header>
-      ${productList()}
+      <header class="intro"><h1 tabindex="-1">Shop <em>the room.</em></h1><div class="ornament" aria-hidden="true">✦</div><p>Products for the pieces in your latest design.</p></header>
+      <div id="room-products"></div>
+      <div id="sample-products"><div class="hint"><span>✦</span><div><strong>No design yet.</strong><small>Here are picks from our sample room.</small></div></div>${productList()}</div>
     </section>
     <section id="app-profile" data-app-panel="profile" hidden>
       <header class="intro"><h1 tabindex="-1">Your profile</h1><div class="ornament" aria-hidden="true">✦</div></header>
-      <div class="hint"><span>✦</span><div><strong>${planLabel}</strong><small>Your room preferences are saved for this session.</small></div></div>
+      <div class="hint"><span>✦</span><div><strong id="plan-label">Free plan</strong><small id="plan-note"></small></div></div>
+      <button class="primary" id="plan-upgrade" data-room="upgrade">Upgrade to Waia Plus <span>→</span></button>
       <ul class="summary-list" id="profile-preferences"></ul>
+      <div id="room-profile"></div>
       <a class="quiet demo-link" href="../onboarding/">Back to setup</a>
     </section>
   </div><nav class="app-nav" aria-label="App tabs">${navigation}</nav>`;
@@ -141,6 +145,25 @@ dialog.addEventListener('click', event => {
 });
 
 flow.innerHTML = appScreen();
+const contextText = Array.isArray(demoContext.preferences)
+  ? demoContext.preferences.map(item => `${item?.label}: ${item?.value}`).join('; ')
+  : '';
+mountRoom({
+  flow,
+  dialog,
+  plan: demoContext.plan,
+  context: contextText,
+  showTab: showAppTab,
+  panels: {
+    design: document.querySelector('#room-design'),
+    products: document.querySelector('#room-products'),
+    sample: document.querySelector('#sample-products'),
+    profile: document.querySelector('#room-profile'),
+    plan: document.querySelector('#plan-label'),
+    planNote: document.querySelector('#plan-note'),
+    upgrade: document.querySelector('#plan-upgrade'),
+  },
+});
 const preferenceList = document.querySelector('#profile-preferences');
 if (Array.isArray(demoContext.preferences)) {
   for (const preference of demoContext.preferences) {
