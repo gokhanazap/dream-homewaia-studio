@@ -204,3 +204,6 @@ dialog::backdrop { background: #23242a80; }
 @keyframes scan { from { top: 0; } to { top: calc(100% - 3px); } }
 @keyframes shimmer { from { background-position: 130% 0; } to { background-position: -130% 0; } }
 @media (prefers-reduced-motion: reduce) { .scan::after, .scan-line { animation: none; } }
+
+.example div { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.example small { color: var(--muted); }

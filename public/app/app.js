@@ -22,6 +22,12 @@ const STAGE_LINES = [
   ['Hunting for pieces you will love…', 'Comparing real stores…', 'Matching products to your budget…'],
   ['Placing everything in your room…', 'Getting the details right…', 'Almost ready to reveal it…'],
 ];
+const EXAMPLES = [
+  ['kitchen', 'Modern farmhouse', 'From a gutted kitchen'],
+  ['deco', 'Art Deco', 'From a bare mattress'],
+  ['boho', 'Bohemian', 'From an empty spare room'],
+  ['japandi', 'Japandi', 'From cracked concrete'],
+];
 const STAGE_PROGRESS = [28, 62, 90];
 const REFINES = ['Add more plants', 'Warmer lighting', 'Try a different rug', 'Make the wall bolder'];
 const QUESTIONS = ['How can I make my living room cozier?', 'What colors work well together?', 'How do I arrange a small space?', 'What lighting suits a bedroom?'];
@@ -136,11 +142,12 @@ function homeView() {
     <section class="hero"><h1>Complete the room <em>you already have.</em></h1></section>
     <button class="tool" data-act="start"><span class="tool-icon" aria-hidden="true">⌂</span><span><strong>Room Designer</strong><small>Your room, your budget, real products.</small></span><span class="tool-arrow" aria-hidden="true">→</span></button>
     <article class="feature">
-      <img src="./assets/home-after.webp" alt="Bright renovated living room with a cream sofa and oak floor">
+      <img src="./assets/ex-kitchen-after.webp" alt="Sage green farmhouse kitchen with a marble island">
       <span class="tag">Start here</span>
       <div class="feature-body"><h2>See it in your room</h2><button class="primary" data-act="start">Try now <span aria-hidden="true">→</span></button></div>
     </article>
-    <section class="item"><h2>From tired to beautiful</h2>${compare('./assets/home-before.webp', './assets/home-after.webp')}</section>`;
+    <section class="item"><h2>Any room. Any style.</h2><p class="muted">Slide to see what is possible.</p></section>
+    ${EXAMPLES.map(([id, style, note]) => `<section class="item example">${compare(`./assets/ex-${id}-before.webp`, `./assets/ex-${id}-after.webp`)}<div><strong>${style}</strong><small>${note}</small></div></section>`).join('')}`;
 }
 
 function section(number, title, tag, body) {
@@ -460,7 +467,7 @@ const actions = {
   tips: showTips,
   generate,
   async sample() {
-    const blob = await (await fetch('./assets/home-before.webp')).blob();
+    const blob = await (await fetch('./assets/ex-japandi-before.webp')).blob();
     state.draft.photo = await resizeImage(blob, MAX_SIDE, 0.82);
     render();
   },
