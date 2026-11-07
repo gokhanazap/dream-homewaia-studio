@@ -1,9 +1,47 @@
-import { mountRoom } from './room.js';
+import { buyPlan, isPro, planPrices } from './billing.js';
+import { FREE_DESIGNS } from './config.js';
 
-const flow = document.querySelector('#flow');
+const view = document.querySelector('#view');
+const nav = document.querySelector('#nav');
 const dialog = document.querySelector('#dialog');
 
-function readDemoContext() {
+const STORE_KEY = 'waia-app-state-v1';
+const MAX_SIDE = 1024;
+const STEPS = ['photo', 'room', 'style', 'changes', 'budget'];
+const ROOMS = ['Living room', 'Bedroom', 'Kitchen', 'Dining room', 'Home office', 'Other'];
+const STYLES = ['Modern', 'Minimal', 'Scandinavian', 'Traditional', 'Bohemian', 'Industrial'];
+const CHANGES = ['Better lighting', 'Wall decor', 'New furniture', 'Cozier feel', 'More storage', 'Add plants'];
+const BUDGETS = [
+  ['Under $250', 'A few small upgrades'],
+  ['$250 to $750', 'Refresh the main pieces'],
+  ['$750 and up', 'A bigger makeover'],
+];
+const STAGES = ['Analyzing your room', 'Finding real products', 'Designing your room'];
+const QUESTIONS = ['How can I make my living room cozier?', 'What colors work well together?', 'How do I arrange a small space?', 'What lighting suits a bedroom?'];
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function loadStore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    return { designs: Array.isArray(saved?.designs) ? saved.designs : [], saved: Array.isArray(saved?.saved) ? saved.saved : [], used: Number(saved?.used) || 0 };
+  } catch {
+    return { designs: [], saved: [], used: 0 };
+  }
+}
+
+function saveStore() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(store));
+  } catch {
+    store.designs = store.designs.slice(0, 3);
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch {}
+  }
+}
+
+function readContext() {
   try {
     return JSON.parse(sessionStorage.getItem('waia-room-demo-context')) || {};
   } catch {
@@ -11,169 +49,413 @@ function readDemoContext() {
   }
 }
 
-const demoContext = readDemoContext();
+const context = readContext();
+const preferences = Array.isArray(context.preferences) ? context.preferences.filter(item => typeof item?.label === 'string' && typeof item?.value === 'string') : [];
+const store = loadStore();
+const emptyDraft = () => ({ photo: null, room: '', style: '', changes: [], note: '', budget: '' });
+const state = { route: 'home', step: 0, draft: emptyDraft(), stage: 0, result: null, error: '', pro: false, resume: false, layout: 'grid', chat: [], chatBusy: false };
 
-const catalog = {
-  clock: {
-    title: 'Wall clock', icon: '◷',
-    reason: 'A wall clock gives the empty wall above the sofa a focal point.',
-    options: [
-      ['Jomparis', 'Silent analog wall clock', 'B0CMX5HD16'],
-      ['Bernhard Products', 'Classic analog wall clock', 'B01HONVHZ2'],
-    ],
-  },
-  lamp: {
-    title: 'Floor lamp', icon: '☼',
-    reason: 'Soft light next to the sofa makes this corner a comfortable place to read.',
-    options: [
-      ['Brightech', 'Reading floor lamp', 'B0797FYNGF'],
-      ['LEPOWER', 'Floor lamp with a fabric shade', 'B078YR2WYQ'],
-    ],
-  },
-};
-
-function shopPreview() {
-  return `<div class="shop-image">
-    <img src="./assets/room-after.webp" alt="Living room with a floor lamp and wall clock" width="1184" height="880">
-    <button class="hotspot clock" data-product="clock" aria-label="See wall clock options">1</button>
-    <button class="hotspot lamp" data-product="lamp" aria-label="See floor lamp options">2</button>
-    <span class="image-tag">✦ &nbsp; SAMPLE DESIGN</span>
-  </div>${productList()}`;
+function go(route) {
+  state.route = route;
+  render();
+  window.scrollTo(0, 0);
 }
 
-function productList() {
-  return `<div class="product-list">
-    <button data-product="clock"><span class="item-index">01</span><span><strong>Wall clock</strong><small>2 product options</small></span><span class="item-arrow">↗</span></button>
-    <button data-product="lamp"><span class="item-index">02</span><span><strong>Floor lamp</strong><small>2 product options</small></span><span class="item-arrow">↗</span></button>
+function resizeImage(source, maxSide, quality) {
+  return new Promise((resolve, reject) => {
+    const url = typeof source === 'string' ? source : URL.createObjectURL(source);
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(image.width * scale);
+      canvas.height = Math.round(image.height * scale);
+      canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+      if (url !== source) URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    image.onerror = () => reject(new Error('That photo could not be opened.'));
+    image.src = url;
+  });
+}
+
+async function post(path, body) {
+  const response = await fetch('./api/' + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Something went wrong. Please try again.');
+  return data;
+}
+
+function compare(before, after) {
+  return `<div class="compare" style="--split: 50%">
+    <img src="${escapeHtml(after)}" alt="Room after the redesign">
+    <img class="before" src="${escapeHtml(before)}" alt="Room before the redesign">
+    <span class="compare-line"></span><span class="tag left">Before</span><span class="tag right">After</span>
+    <input type="range" min="0" max="100" value="50" aria-label="Compare before and after">
   </div>`;
 }
 
-function openProducts(id) {
-  const item = catalog[id];
-  const cards = item.options.map(([brand, name, asin]) => `<div class="product-card">
-    <span class="choice-icon" aria-hidden="true">${item.icon}</span>
-    <div><strong>${brand}</strong><small>${name}</small></div>
+function homeView() {
+  return `<header class="topbar">
+      <button class="pill${state.pro ? ' quiet' : ''}" data-act="${state.pro ? 'settings' : 'upgrade'}">${state.pro ? 'Plus' : 'Go Plus'}</button>
+      <span class="topbar-title">Waia</span>
+      <button class="icon-button" data-go="settings" aria-label="Settings">⚙</button>
+    </header>
+    <section class="hero"><h1>Complete the room <em>you already have.</em></h1></section>
+    <button class="tool" data-act="start"><span class="tool-icon" aria-hidden="true">⌂</span><span><strong>Room Designer</strong><small>Your room, your budget, real products.</small></span><span class="tool-arrow" aria-hidden="true">→</span></button>
+    <article class="feature">
+      <img src="./assets/room-after.webp" alt="Living room finished with a wall clock and floor lamp">
+      <span class="tag">Start here</span>
+      <div class="feature-body"><h2>See it in your room</h2><button class="primary" data-act="start">Try now <span aria-hidden="true">→</span></button></div>
+    </article>
+    <section class="item"><h2>Small changes, real difference</h2>${compare('./assets/room-before.webp', './assets/room-after.webp')}</section>`;
+}
+
+function stepHeader() {
+  const bars = STEPS.map((_, index) => `<span class="${index <= state.step ? 'on' : ''}"></span>`).join('');
+  const remaining = Math.max(FREE_DESIGNS - store.used, 0);
+  return `<header class="topbar">
+    <button class="icon-button" data-act="back" aria-label="Back">←</button>
+    <div class="progress" aria-label="Step ${state.step + 1} of ${STEPS.length}">${bars}</div>
+    <span class="pill quiet">${state.pro ? 'Plus' : `${remaining} free`}</span>
+  </header>`;
+}
+
+function optionList(name, values, selected, columns = '') {
+  const buttons = values.map(value => {
+    const [label, hint] = Array.isArray(value) ? value : [value];
+    const pressed = Array.isArray(selected) ? selected.includes(label) : selected === label;
+    return `<button class="option" data-pick="${name}" data-value="${escapeHtml(label)}" aria-pressed="${pressed}"><span>${escapeHtml(label)}${hint ? `<small>${escapeHtml(hint)}</small>` : ''}</span></button>`;
+  }).join('');
+  return `<div class="options ${columns}">${buttons}</div>`;
+}
+
+function createView() {
+  const { draft } = state;
+  const step = STEPS[state.step];
+  const error = state.error ? `<p class="error" role="alert">${escapeHtml(state.error)}</p>` : '';
+  const next = (label, ready) => `<div class="footer-action"><button class="primary" data-act="next" ${ready ? '' : 'disabled'}>${label} <span aria-hidden="true">→</span></button></div>`;
+  if (step === 'photo') {
+    return `${stepHeader()}<div class="step-title"><h1>Upload your <em>room</em></h1><p class="muted">Start with a clear photo of the space.</p></div>
+      ${draft.photo ? `<div class="preview"><img src="${draft.photo}" alt="Your room"></div>` : ''}
+      <label class="dropzone"><input type="file" accept="image/*" data-file><span aria-hidden="true">＋</span><strong>${draft.photo ? 'Choose another photo' : 'Tap to add a photo'}</strong><small>Use good light and a wide angle</small></label>
+      <button class="text-button" data-act="tips">Photo tips</button>
+      <button class="secondary" data-act="sample">Use the sample living room</button>
+      ${error}${next('Continue', draft.photo)}`;
+  }
+  if (step === 'room') return `${stepHeader()}<div class="step-title"><h1>Which <em>room</em> is this?</h1></div>${optionList('room', ROOMS, draft.room, 'two')}${next('Continue', draft.room)}`;
+  if (step === 'style') return `${stepHeader()}<div class="step-title"><h1>What <em>style</em> do you want?</h1></div>${optionList('style', STYLES, draft.style, 'two')}${next('Continue', draft.style)}`;
+  if (step === 'changes') {
+    return `${stepHeader()}<div class="step-title"><h1>What should we <em>change?</em></h1><p class="muted">Pick as many as you like.</p></div>
+      ${optionList('changes', CHANGES, draft.changes, 'two')}
+      <label><span class="sr-only">Anything specific?</span><textarea class="note" data-note maxlength="300" placeholder="Anything specific? For example, a clock on the empty wall.">${escapeHtml(draft.note)}</textarea></label>
+      ${next('Continue', draft.changes.length || draft.note.trim())}`;
+  }
+  return `${stepHeader()}<div class="step-title"><h1>What is your <em>budget?</em></h1><p class="muted">We will look for products in this range.</p></div>
+    ${optionList('budget', BUDGETS, draft.budget)}${error}
+    <div class="footer-action"><button class="primary" data-act="generate" ${draft.budget ? '' : 'disabled'}>Design my room <span aria-hidden="true">→</span></button></div>`;
+}
+
+function generatingView() {
+  const rows = STAGES.map((label, index) => {
+    const status = index < state.stage ? 'done' : index === state.stage ? 'active' : '';
+    return `<div class="stage ${status}"><span class="stage-mark" aria-hidden="true">${index < state.stage ? '✓' : index + 1}</span>${label}</div>`;
+  }).join('');
+  return `<div class="preview"><img src="${state.draft.photo}" alt="Your room"></div>
+    <div class="step-title"><h1>Working on <em>your room</em></h1><p class="muted">This usually takes about 20 seconds.</p></div>
+    <div class="stages" role="status">${rows}</div>`;
+}
+
+function productCard(product, item) {
+  const saved = store.saved.some(entry => entry.url === product.url);
+  return `<article class="product">
+    <div><strong>${escapeHtml(product.title)}</strong><small>${product.price ? 'About ' + escapeHtml(product.price) + ' · confirm on Amazon' : 'Check the price on Amazon'}</small></div>
     <div class="product-actions">
-      <a class="amazon-link" href="https://www.amazon.com/gp/aws/cart/add.html?ASIN.1=${asin}&amp;Quantity.1=1" target="_blank" rel="noopener noreferrer">Open Amazon cart ↗</a>
-      <a class="product-detail" href="https://www.amazon.com/dp/${asin}" target="_blank" rel="noopener noreferrer">View product ↗</a>
+      <button class="save" data-save="${escapeHtml(product.url)}" data-title="${escapeHtml(product.title)}" data-price="${escapeHtml(product.price || '')}" data-item="${escapeHtml(item)}" aria-pressed="${saved}">${saved ? 'Saved' : 'Save'}</button>
+      <a class="link" href="${escapeHtml(product.url)}" target="_blank" rel="noopener noreferrer">Find on Amazon ↗</a>
     </div>
-  </div>`).join('');
-  dialog.innerHTML = `<button class="round dialog-close" data-close aria-label="Close">×</button>
-    <span class="eyebrow"><span class="dot"></span> SIMILAR PRODUCTS</span>
-    <h2 id="dialog-title">${item.title}</h2><p>${item.reason}</p>${cards}
-    <p class="shopping-note">Links open on Amazon.com. Amazon may ask you to sign in to use your cart.</p>`;
+  </article>`;
+}
+
+function resultView() {
+  const { result } = state;
+  const items = result.items.map(item => `<section class="item">
+    <h2>${escapeHtml(item.name)}</h2><p class="muted">${escapeHtml(item.reason)}</p>
+    ${item.products.map(product => productCard(product, item.name)).join('')}
+    <a class="link plain" href="${escapeHtml(item.searchUrl)}" target="_blank" rel="noopener noreferrer">${item.products.length ? 'More options on Amazon ↗' : 'Search Amazon ↗'}</a>
+  </section>`).join('');
+  return `<header class="topbar"><button class="icon-button" data-go="designs" aria-label="Back to designs">←</button><span class="topbar-title">Your design</span><span></span></header>
+    ${compare(result.before, result.imageUrl)}
+    <p>${escapeHtml(result.summary)}</p>
+    <div class="step-title"><h2>Similar products</h2><p class="muted">Real products that match this look. The image is a preview, so the exact item can differ.</p></div>
+    ${items}
+    <button class="primary" data-act="start">Design another room <span aria-hidden="true">→</span></button>`;
+}
+
+function designsView() {
+  const header = `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">My Designs</span><span></span></header>`;
+  if (!store.designs.length) {
+    return `${header}<div class="center"><h1>No saved designs</h1><p class="muted">Your room designs will appear here.</p></div>
+      <div class="steps-card"><div><b>1</b>Upload a room photo</div><div><b>2</b>Answer a few questions</div><div><b>3</b>Shop your design</div></div>
+      <button class="primary" data-act="start">＋ Create your first design</button>`;
+  }
+  const cards = store.designs.map((design, index) => `<button class="design-card" data-open="${index}"><img src="${escapeHtml(design.imageUrl)}" alt="Saved room design"><span>${escapeHtml(design.title)}</span></button>`).join('');
+  return `${header}<div class="topbar">
+      <div class="view-toggle"><button data-layout="grid" aria-pressed="${state.layout === 'grid'}" aria-label="Grid view">▦</button><button data-layout="list" aria-pressed="${state.layout === 'list'}" aria-label="List view">☰</button></div>
+      <button class="pill quiet" data-act="clear">Delete all</button>
+    </div>
+    <div class="designs ${state.layout}">${cards}</div>`;
+}
+
+function chatView() {
+  const log = state.chat.map(message => `<p class="bubble ${message.from}">${escapeHtml(message.text)}</p>`).join('');
+  const suggestions = state.chat.length ? '' : `<div class="card"><h2>Hi, I'm Waia.</h2><p class="muted">How can I help with your space?</p>${QUESTIONS.map(question => `<button class="suggestion" data-ask="${escapeHtml(question)}"><span>${escapeHtml(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div>`;
+  return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Ask Waia</span><span></span></header>
+    ${suggestions}<div class="chat-log">${log}${state.chatBusy ? '<p class="bubble waia" role="status">Thinking…</p>' : ''}</div>
+    <form class="composer" data-chat><label class="sr-only" for="chat-input">Ask Waia</label><input id="chat-input" autocomplete="off" maxlength="400" placeholder="Ask Waia anything" ${state.chatBusy ? 'disabled' : ''}><button aria-label="Send" ${state.chatBusy ? 'disabled' : ''}>↑</button></form>`;
+}
+
+function settingsView() {
+  const prefs = preferences.map(item => `<li><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong></li>`).join('');
+  const saved = store.saved.map(item => `<li><span>${escapeHtml(item.item)}</span><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)} ↗</a></li>`).join('');
+  return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Settings</span><span></span></header>
+    <section class="card"><h2>${state.pro ? 'Waia Plus' : 'Free plan'}</h2><p class="muted">${state.pro ? 'Unlimited room designs.' : `${Math.max(FREE_DESIGNS - store.used, 0)} free design left.`}</p>${state.pro ? '' : '<button class="primary" data-act="upgrade">Upgrade to Waia Plus</button>'}</section>
+    <section class="item"><h2>Saved products</h2>${saved ? `<ul class="list">${saved}</ul>` : '<p class="muted">Save products from a design to compare them later.</p>'}</section>
+    ${prefs ? `<section class="item"><h2>Your preferences</h2><ul class="list">${prefs}</ul></section>` : ''}
+    <a class="link plain" href="../onboarding/">Back to setup</a>`;
+}
+
+const views = { home: homeView, create: createView, generating: generatingView, result: resultView, designs: designsView, chat: chatView, settings: settingsView };
+
+function renderNav() {
+  nav.hidden = state.route === 'create' || state.route === 'generating';
+  const item = (route, icon, label) => `<button data-go="${route}" ${state.route === route ? 'aria-current="page"' : ''}><span aria-hidden="true">${icon}</span>${label}</button>`;
+  nav.innerHTML = `<div class="nav-group">${item('home', '⌂', 'Home')}${item('chat', '✦', 'Chat')}${item('designs', '▤', 'Designs')}</div><button class="nav-add" data-act="start" aria-label="New design">＋</button>`;
+}
+
+function render() {
+  view.innerHTML = views[state.route]();
+  renderNav();
+}
+
+function startDesign() {
+  state.draft = emptyDraft();
+  state.step = 0;
+  state.error = '';
+  go('create');
+}
+
+async function canDesign() {
+  if (store.used < FREE_DESIGNS || state.pro) return true;
+  state.pro = await isPro();
+  return state.pro;
+}
+
+async function generate() {
+  if (!(await canDesign())) {
+    state.resume = true;
+    openPaywall();
+    return;
+  }
+  const { draft } = state;
+  state.error = '';
+  state.stage = 0;
+  go('generating');
+  try {
+    const plan = await post('plan', {
+      image: draft.photo,
+      context: preferences.map(item => `${item.label}: ${item.value}`).join('; '),
+      answers: { room: draft.room, style: draft.style, changes: draft.changes, note: draft.note, budget: draft.budget },
+    });
+    state.stage = 1;
+    render();
+    const { items } = await post('products', { items: plan.items, budget: draft.budget });
+    state.stage = 2;
+    render();
+    const picks = items.map(item => item.products[0]?.title || item.name);
+    const { imageUrl } = await post('render', { image: draft.photo, editPrompt: plan.editPrompt, products: picks });
+    const before = await resizeImage(draft.photo, 480, 0.7);
+    state.result = { imageUrl, before, summary: plan.summary, items, title: `${draft.style} ${draft.room}`.toLowerCase() };
+    state.result.title = state.result.title.charAt(0).toUpperCase() + state.result.title.slice(1);
+    store.used += 1;
+    store.designs.unshift(state.result);
+    store.designs = store.designs.slice(0, 8);
+    saveStore();
+    state.result = { ...state.result, before: draft.photo };
+    go('result');
+  } catch (error) {
+    state.error = error.message;
+    state.step = STEPS.length - 1;
+    go('create');
+  }
+}
+
+async function openPaywall(selected = 'annual') {
+  let prices;
+  try {
+    prices = await planPrices();
+  } catch {
+    state.error = 'Plans could not be loaded. Please try again.';
+    render();
+    return;
+  }
+  const plan = (id, label, note, period) => `<label class="plan"><input type="radio" name="plan" value="${id}" ${selected === id ? 'checked' : ''}><span><strong>${label}</strong><small>${note}</small></span><span class="plan-price">${prices[id]}<small>/ ${period}</small></span></label>`;
+  dialog.innerHTML = `<button class="dialog-close" data-close aria-label="Close">×</button>
+    <div class="dialog-body">
+      <h2 id="dialog-title">Keep designing your home</h2>
+      <p class="muted">Your first design is free. Waia Plus gives you unlimited rooms.</p>
+      ${plan('annual', 'Yearly', 'Renews every year', 'year')}
+      ${plan('weekly', 'Weekly', 'Renews every week', 'week')}
+      <button class="primary" data-buy>Continue <span aria-hidden="true">→</span></button>
+      <p class="fineprint">Test mode. No real money is charged. Cancel anytime.</p>
+    </div>`;
+  if (!dialog.open) dialog.showModal();
+}
+
+async function purchase(plan) {
+  dialog.close();
+  try {
+    if (await buyPlan(plan)) {
+      state.pro = true;
+      const resume = state.resume;
+      state.resume = false;
+      render();
+      if (resume) generate();
+    }
+  } catch {
+    state.error = 'The payment could not be completed. Please try again.';
+    render();
+  }
+}
+
+function toggleSaved(button) {
+  const index = store.saved.findIndex(entry => entry.url === button.dataset.save);
+  if (index >= 0) store.saved.splice(index, 1);
+  else store.saved.unshift({ url: button.dataset.save, title: button.dataset.title, price: button.dataset.price, item: button.dataset.item });
+  saveStore();
+  render();
+}
+
+function pick(button) {
+  const { draft } = state;
+  const { pick: name, value } = button.dataset;
+  if (name === 'changes') {
+    draft.changes = draft.changes.includes(value) ? draft.changes.filter(item => item !== value) : [...draft.changes, value];
+  } else {
+    draft[name] = value;
+  }
+  render();
+}
+
+async function ask(text) {
+  const value = text.trim();
+  if (!value || state.chatBusy) return;
+  state.chat.push({ from: 'you', text: value });
+  state.chatBusy = true;
+  render();
+  try {
+    const { reply } = await post('chat', { messages: state.chat });
+    state.chat.push({ from: 'waia', text: reply });
+  } catch (error) {
+    state.chat.push({ from: 'waia', text: error.message });
+  }
+  state.chatBusy = false;
+  render();
+}
+
+function showTips() {
+  dialog.innerHTML = `<button class="dialog-close" data-close aria-label="Close">×</button>
+    <div class="dialog-body"><h2 id="dialog-title">Photo tips</h2>
+    <ul class="list"><li>Stand in a corner to show more of the room.</li><li>Turn on the lights or open the curtains.</li><li>Keep the phone level.</li></ul></div>`;
   dialog.showModal();
 }
 
-function roomDemo() {
-  return `<div class="demo-switch" role="group" aria-label="Living room before and after">
-    <button data-view="before" aria-pressed="true" aria-controls="demo-before">Before</button>
-    <button data-view="after" aria-pressed="false" aria-controls="demo-after">After</button>
-  </div>
-  <div id="demo-before" data-panel="before">
-    <div class="shop-image">
-      <img src="./assets/room-before.webp" alt="Living room with a bare wall and no floor lamp beside the sofa" width="1184" height="880">
-      <span class="image-tag">LIVING ROOM · BEFORE</span>
-    </div>
-    <div class="hint"><span>✦</span><div><strong>Two additions can change this room.</strong><small>A clock for the bare wall and a reading lamp beside the sofa.</small></div></div>
-  </div>
-  <div id="demo-after" data-panel="after" hidden>${shopPreview()}</div>
-  <div class="room-actions"><button class="primary demo-cta" data-view="after"><strong>Show the makeover</strong><span aria-hidden="true">→</span></button></div>`;
-}
+const actions = {
+  start: startDesign,
+  upgrade: () => openPaywall(),
+  settings: () => go('settings'),
+  tips: showTips,
+  generate,
+  async sample() {
+    const blob = await (await fetch('./assets/room-before.webp')).blob();
+    state.draft.photo = await resizeImage(blob, MAX_SIDE, 0.82);
+    render();
+  },
+  next() {
+    state.step += 1;
+    render();
+    window.scrollTo(0, 0);
+  },
+  back() {
+    if (state.step === 0) go('home');
+    else {
+      state.step -= 1;
+      render();
+    }
+  },
+  clear() {
+    store.designs = [];
+    saveStore();
+    render();
+  },
+};
 
-function showDemoView(view) {
-  for (const tab of flow.querySelectorAll('.demo-switch button')) {
-    tab.setAttribute('aria-pressed', String(tab.dataset.view === view));
-  }
-  for (const panel of flow.querySelectorAll('[data-panel]')) {
-    panel.hidden = panel.dataset.panel !== view;
-  }
-  const cta = flow.querySelector('.demo-cta');
-  cta.dataset.view = view === 'before' ? 'after' : 'before';
-  cta.firstElementChild.textContent = view === 'before' ? 'Show the makeover' : 'See the original';
-}
-
-function appScreen() {
-  const tabs = [
-    ['design', 'Design', '⌂'],
-    ['products', 'Products', '◇'],
-    ['profile', 'Profile', '◉'],
-  ];
-  const navigation = tabs.map(([id, label, icon]) => `<button data-tab="${id}" aria-controls="app-${id}" aria-pressed="${id === 'design'}"><span aria-hidden="true">${icon}</span>${label}</button>`).join('');
-  return `<div class="flow-body app-body">
-    <section id="app-design" data-app-panel="design">
-      <header class="intro"><h1 tabindex="-1">Complete <em>your room.</em></h1><div class="ornament" aria-hidden="true">✦</div><p>Show us the room, tell us what you want, and shop the pieces.</p></header>
-      <div id="room-design"></div>
-    </section>
-    <section id="app-products" data-app-panel="products" hidden>
-      <header class="intro"><h1 tabindex="-1">Shop <em>the room.</em></h1><div class="ornament" aria-hidden="true">✦</div><p>Products for the pieces in your latest design.</p></header>
-      <div id="room-products"></div>
-      <div id="sample-products"><div class="hint"><span>✦</span><div><strong>No design yet.</strong><small>Here are picks from our sample room.</small></div></div>${productList()}</div>
-    </section>
-    <section id="app-profile" data-app-panel="profile" hidden>
-      <header class="intro"><h1 tabindex="-1">Your profile</h1><div class="ornament" aria-hidden="true">✦</div></header>
-      <div class="hint"><span>✦</span><div><strong id="plan-label">Free plan</strong><small id="plan-note"></small></div></div>
-      <button class="primary" id="plan-upgrade" data-room="upgrade">Upgrade to Waia Plus <span>→</span></button>
-      <ul class="summary-list" id="profile-preferences"></ul>
-      <div id="room-profile"></div>
-      <a class="quiet demo-link" href="../onboarding/">Back to setup</a>
-    </section>
-  </div><nav class="app-nav" aria-label="App tabs">${navigation}</nav>`;
-}
-
-function showAppTab(id) {
-  for (const button of flow.querySelectorAll('[data-tab]')) {
-    button.setAttribute('aria-pressed', String(button.dataset.tab === id));
-  }
-  for (const panel of flow.querySelectorAll('[data-app-panel]')) {
-    panel.hidden = panel.dataset.appPanel !== id;
-  }
-  window.scrollTo(0, 0);
-  flow.querySelector('[data-app-panel]:not([hidden]) h1').focus({ preventScroll: true });
-}
-
-flow.addEventListener('click', event => {
+document.addEventListener('click', event => {
   const button = event.target.closest('button');
   if (!button) return;
-  if (button.dataset.product) openProducts(button.dataset.product);
-  if (button.dataset.view) showDemoView(button.dataset.view);
-  if (button.dataset.tab) showAppTab(button.dataset.tab);
-});
-
-dialog.addEventListener('click', event => {
-  if (event.target === dialog || event.target.closest('[data-close]')) dialog.close();
-});
-
-flow.innerHTML = appScreen();
-const contextText = Array.isArray(demoContext.preferences)
-  ? demoContext.preferences.map(item => `${item?.label}: ${item?.value}`).join('; ')
-  : '';
-mountRoom({
-  flow,
-  dialog,
-  plan: demoContext.plan,
-  context: contextText,
-  showTab: showAppTab,
-  panels: {
-    design: document.querySelector('#room-design'),
-    products: document.querySelector('#room-products'),
-    sample: document.querySelector('#sample-products'),
-    profile: document.querySelector('#room-profile'),
-    plan: document.querySelector('#plan-label'),
-    planNote: document.querySelector('#plan-note'),
-    upgrade: document.querySelector('#plan-upgrade'),
-  },
-});
-const preferenceList = document.querySelector('#profile-preferences');
-if (Array.isArray(demoContext.preferences)) {
-  for (const preference of demoContext.preferences) {
-    if (typeof preference?.label !== 'string' || typeof preference.value !== 'string') continue;
-    const item = document.createElement('li');
-    const label = document.createElement('span');
-    const value = document.createElement('strong');
-    label.textContent = preference.label;
-    value.textContent = preference.value;
-    item.append(label, value);
-    preferenceList.append(item);
+  if (button.dataset.go) go(button.dataset.go);
+  if (button.dataset.act) actions[button.dataset.act]();
+  if (button.dataset.pick) pick(button);
+  if (button.dataset.save) toggleSaved(button);
+  if (button.dataset.ask) ask(button.dataset.ask);
+  if (button.dataset.buy !== undefined) purchase(dialog.querySelector('[name="plan"]:checked').value);
+  if (button.dataset.close !== undefined) {
+    state.resume = false;
+    dialog.close();
   }
-}
+  if (button.dataset.layout) {
+    state.layout = button.dataset.layout;
+    render();
+  }
+  if (button.dataset.open) {
+    state.result = store.designs[Number(button.dataset.open)];
+    go('result');
+  }
+});
+
+view.addEventListener('input', event => {
+  if (event.target.type === 'range') event.target.closest('.compare').style.setProperty('--split', event.target.value + '%');
+  if (event.target.dataset.note !== undefined) {
+    state.draft.note = event.target.value;
+    view.querySelector('[data-act="next"]').disabled = !state.draft.changes.length && !state.draft.note.trim();
+  }
+});
+
+view.addEventListener('change', async event => {
+  if (event.target.dataset.file === undefined || !event.target.files[0]) return;
+  try {
+    state.draft.photo = await resizeImage(event.target.files[0], MAX_SIDE, 0.82);
+    state.error = '';
+  } catch (error) {
+    state.error = error.message;
+  }
+  render();
+});
+
+view.addEventListener('submit', event => {
+  if (event.target.dataset.chat === undefined) return;
+  event.preventDefault();
+  ask(event.target.querySelector('input').value);
+});
+
+render();
+isPro().then(pro => {
+  state.pro = pro;
+  render();
+  // A plan chosen during setup opens checkout here, with the same RevenueCat prices.
+  if (!pro && (context.plan === 'weekly' || context.plan === 'annual')) openPaywall(context.plan);
+});

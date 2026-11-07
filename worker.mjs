@@ -1,4 +1,4 @@
-import { designRoom } from './room-api.mjs';
+import { roomApi } from './room-api.mjs';
 
 export default {
   fetch(request, env) {
@@ -13,7 +13,7 @@ export default {
       return Response.redirect(url, 302);
     }
 
-    if (url.pathname === '/app/api/design') return designRoom(request, env);
+    if (url.pathname.startsWith('/app/api/')) return roomApi(url.pathname.slice('/app/api/'.length), request, env);
 
     if (url.pathname === '/onboarding/' || url.pathname === '/app/') {
       url.pathname += 'index.html';
