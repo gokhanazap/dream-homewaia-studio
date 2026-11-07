@@ -1,0 +1,11 @@
+{
+  "_note": "Değerleri ürün sayfasından elle doldurun. null kalan alan arayüzde 'ürün sayfasında kontrol et' olarak görünür. Fiyatlar değişebilir.",
+  "currency": "$",
+  "defaultBudget": 150,
+  "products": {
+    "B0CMX5HD16": { "type": "clock", "diameterCm": null, "price": null },
+    "B01HONVHZ2": { "type": "clock", "diameterCm": null, "price": null },
+    "B0797FYNGF": { "type": "lamp", "heightCm": null, "baseCm": null, "price": null },
+    "B078YR2WYQ": { "type": "lamp", "heightCm": null, "baseCm": null, "price": null }
+  }
+}
