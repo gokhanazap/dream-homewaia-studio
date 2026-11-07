@@ -7,16 +7,22 @@ const dialog = document.querySelector('#dialog');
 
 const STORE_KEY = 'waia-app-state-v1';
 const MAX_SIDE = 1024;
-const STEPS = ['photo', 'room', 'style', 'changes', 'budget'];
+const MIN_WAIT_MS = 5000;
 const ROOMS = ['Living room', 'Bedroom', 'Kitchen', 'Dining room', 'Home office', 'Other'];
-const STYLES = ['Modern', 'Minimal', 'Scandinavian', 'Traditional', 'Bohemian', 'Industrial'];
+// Each style maps to one quarter of assets/styles.webp.
+const STYLES = [['Minimal', '0% 0%'], ['Modern', '100% 0%'], ['Bohemian', '0% 100%'], ['Traditional', '100% 100%']];
 const CHANGES = ['Better lighting', 'Wall decor', 'New furniture', 'Cozier feel', 'More storage', 'Add plants'];
 const BUDGETS = [
-  ['Under $250', 'A few small upgrades'],
-  ['$250 to $750', 'Refresh the main pieces'],
-  ['$750 and up', 'A bigger makeover'],
+  ['$', 'Under $250', 'A few small upgrades.'],
+  ['$$', '$250 to $750', 'Refresh the main pieces.'],
+  ['$$$', '$750 and up', 'A bigger makeover.'],
 ];
-const STAGES = ['Analyzing your room', 'Finding real products', 'Designing your room'];
+const STAGE_LINES = [
+  ['Reading the light in your room…', 'Studying your layout…', 'Spotting what this space is missing…'],
+  ['Hunting for pieces you will love…', 'Comparing real stores…', 'Matching products to your budget…'],
+  ['Placing everything in your room…', 'Getting the details right…', 'Almost ready to reveal it…'],
+];
+const STAGE_PROGRESS = [28, 62, 90];
 const REFINES = ['Add more plants', 'Warmer lighting', 'Try a different rug', 'Make the wall bolder'];
 const QUESTIONS = ['How can I make my living room cozier?', 'What colors work well together?', 'How do I arrange a small space?', 'What lighting suits a bedroom?'];
 
@@ -59,8 +65,8 @@ function readContext() {
 const context = readContext();
 const preferences = Array.isArray(context.preferences) ? context.preferences.filter(item => typeof item?.label === 'string' && typeof item?.value === 'string') : [];
 const store = loadStore();
-const emptyDraft = () => ({ photo: null, room: '', style: '', changes: [], note: '', budget: '' });
-const state = { route: 'home', step: 0, draft: emptyDraft(), stage: 0, result: null, error: '', pro: false, pendingRun: null, layout: 'grid', chat: [], chatBusy: false };
+const emptyDraft = () => ({ photo: null, room: ROOMS[0], style: 'Modern', changes: [], note: '', budget: BUDGETS[1][1] });
+const state = { route: 'home', draft: emptyDraft(), stage: 0, result: null, error: '', pro: false, pendingRun: null, layout: 'grid', chat: [], chatBusy: false };
 
 function go(route) {
   state.route = route;
@@ -126,58 +132,56 @@ function homeView() {
     <section class="item"><h2>Small changes, real difference</h2>${compare('./assets/room-before.webp', './assets/room-after.webp')}</section>`;
 }
 
-function stepHeader() {
-  const bars = STEPS.map((_, index) => `<span class="${index <= state.step ? 'on' : ''}"></span>`).join('');
-  return `<header class="topbar">
-    <button class="icon-button" data-act="back" aria-label="Back">←</button>
-    <div class="progress" aria-label="Step ${state.step + 1} of ${STEPS.length}">${bars}</div>
-    <span class="pill quiet">${creditLabel()}</span>
-  </header>`;
+function section(number, title, tag, body) {
+  return `<section class="create-section">
+    <div class="section-head"><span class="section-number">${number}</span><h2>${title}</h2><span class="section-tag">${tag}</span></div>
+    ${body}
+  </section>`;
 }
 
-function optionList(name, values, selected, columns = '') {
-  const buttons = values.map(value => {
-    const [label, hint] = Array.isArray(value) ? value : [value];
-    const pressed = Array.isArray(selected) ? selected.includes(label) : selected === label;
-    return `<button class="option" data-pick="${name}" data-value="${escapeHtml(label)}" aria-pressed="${pressed}"><span>${escapeHtml(label)}${hint ? `<small>${escapeHtml(hint)}</small>` : ''}</span></button>`;
+function chipRow(name, values, selected) {
+  const chips = values.map(value => {
+    const pressed = Array.isArray(selected) ? selected.includes(value) : selected === value;
+    return `<button class="pick-chip" data-pick="${name}" data-value="${escapeHtml(value)}" aria-pressed="${pressed}">${escapeHtml(value)}</button>`;
   }).join('');
-  return `<div class="options ${columns}">${buttons}</div>`;
+  return `<div class="scroll-row">${chips}</div>`;
+}
+
+function budgetHint(value) {
+  return BUDGETS.find(([, label]) => label === value)?.[2] || '';
 }
 
 function createView() {
   const { draft } = state;
-  const step = STEPS[state.step];
-  const error = state.error ? `<p class="error" role="alert">${escapeHtml(state.error)}</p>` : '';
-  const next = (label, ready) => `<div class="footer-action"><button class="primary" data-act="next" ${ready ? '' : 'disabled'}>${label} <span aria-hidden="true">→</span></button></div>`;
-  if (step === 'photo') {
-    return `${stepHeader()}<div class="step-title"><h1>Upload your <em>room</em></h1><p class="muted">Start with a clear photo of the space.</p></div>
-      ${draft.photo ? `<div class="preview"><img src="${draft.photo}" alt="Your room"></div>` : ''}
-      <label class="dropzone"><input type="file" accept="image/*" data-file><span aria-hidden="true">＋</span><strong>${draft.photo ? 'Choose another photo' : 'Tap to add a photo'}</strong><small>Use good light and a wide angle</small></label>
-      <button class="text-button" data-act="tips">Photo tips</button>
-      <button class="secondary" data-act="sample">Use the sample living room</button>
-      ${error}${next('Continue', draft.photo)}`;
-  }
-  if (step === 'room') return `${stepHeader()}<div class="step-title"><h1>Which <em>room</em> is this?</h1></div>${optionList('room', ROOMS, draft.room, 'two')}${next('Continue', draft.room)}`;
-  if (step === 'style') return `${stepHeader()}<div class="step-title"><h1>What <em>style</em> do you want?</h1></div>${optionList('style', STYLES, draft.style, 'two')}${next('Continue', draft.style)}`;
-  if (step === 'changes') {
-    return `${stepHeader()}<div class="step-title"><h1>What should we <em>change?</em></h1><p class="muted">Pick as many as you like.</p></div>
-      ${optionList('changes', CHANGES, draft.changes, 'two')}
-      <label><span class="sr-only">Anything specific?</span><textarea class="note" data-note maxlength="300" placeholder="Anything specific? For example, a clock on the empty wall.">${escapeHtml(draft.note)}</textarea></label>
-      ${next('Continue', draft.changes.length || draft.note.trim())}`;
-  }
-  return `${stepHeader()}<div class="step-title"><h1>What is your <em>budget?</em></h1><p class="muted">We will look for products in this range.</p></div>
-    ${optionList('budget', BUDGETS, draft.budget)}${error}
-    <div class="footer-action"><button class="primary" data-act="generate" ${draft.budget ? '' : 'disabled'}>Design my room <span aria-hidden="true">→</span></button></div>`;
+  const photo = draft.photo
+    ? `<label class="dropzone filled"><input type="file" accept="image/*" data-file><img src="${draft.photo}" alt="Your room"><span class="tag">Change photo</span></label>`
+    : '<label class="dropzone"><input type="file" accept="image/*" data-file><span aria-hidden="true">＋</span><strong>Tap to upload a photo</strong><small>Use good light and a wide angle</small></label>';
+  const styles = STYLES.map(([label, position]) => `<button class="style-card" data-pick="style" data-value="${label}" aria-pressed="${draft.style === label}"><span class="style-image" style="background-position: ${position}"></span><strong>${label}</strong></button>`).join('');
+  const budgets = BUDGETS.map(([symbol, label]) => `<button data-pick="budget" data-value="${escapeHtml(label)}" aria-pressed="${draft.budget === label}" aria-label="${escapeHtml(label)}">${symbol}</button>`).join('');
+  return `<header class="topbar">
+      <button class="icon-button" data-go="home" aria-label="Back">←</button>
+      <span class="topbar-title">Design your room</span>
+      <span class="pill quiet">${creditLabel()}</span>
+    </header>
+    <section class="create-section">
+      ${photo}
+      <div class="photo-actions"><button class="text-button" data-act="sample">Use a sample room</button><button class="text-button" data-act="tips">Photo tips</button></div>
+    </section>
+    ${section(1, 'Room type', 'Required', chipRow('room', ROOMS, draft.room))}
+    ${section(2, 'Style', 'Required', `<div class="scroll-row">${styles}</div>`)}
+    ${section(3, 'Budget', 'Required', `<div class="segmented">${budgets}</div><p class="muted" data-budget-hint>${escapeHtml(draft.budget)}. ${escapeHtml(budgetHint(draft.budget))}</p>`)}
+    ${section(4, 'What should change?', 'Optional', `${chipRow('changes', CHANGES, draft.changes)}<label><span class="sr-only">Anything specific?</span><textarea class="note" data-note maxlength="300" placeholder="Anything specific? For example, a clock on the empty wall.">${escapeHtml(draft.note)}</textarea></label>`)}
+    ${state.error ? `<p class="error" role="alert">${escapeHtml(state.error)}</p>` : ''}
+    <div class="footer-action"><button class="primary" data-act="generate" ${draft.photo ? '' : 'disabled'}>${draft.photo ? 'Design my room' : 'Add a photo to continue'} <span aria-hidden="true">→</span></button><p class="fineprint center">Uses 1 credit</p></div>`;
 }
 
 function generatingView() {
-  const rows = STAGES.map((label, index) => {
-    const status = index < state.stage ? 'done' : index === state.stage ? 'active' : '';
-    return `<div class="stage ${status}"><span class="stage-mark" aria-hidden="true">${index < state.stage ? '✓' : index + 1}</span>${label}</div>`;
-  }).join('');
-  return `<div class="preview"><img src="${state.draft.photo}" alt="Your room"></div>
-    <div class="step-title"><h1>Working on <em>your room</em></h1><p class="muted">This usually takes about 30 seconds.</p></div>
-    <div class="stages" role="status">${rows}</div>`;
+  return `<div class="reveal">
+      <div class="scan"><img src="${escapeHtml(state.draft.photo)}" alt="Your room being redesigned"><span class="scan-line"></span></div>
+      <h1>Your dream room is on its way</h1>
+      <p class="reveal-line" data-line role="status">${STAGE_LINES[0][0]}</p>
+      <div class="meter" aria-hidden="true"><span data-meter style="width: ${STAGE_PROGRESS[state.stage]}%"></span></div>
+    </div>`;
 }
 
 function productCard(product, item) {
@@ -259,7 +263,6 @@ function render() {
 
 function startDesign() {
   state.draft = emptyDraft();
-  state.step = 0;
   state.error = '';
   go('create');
 }
@@ -273,6 +276,23 @@ function refill() {
   saveStore();
 }
 
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, Math.max(ms, 0)));
+}
+
+// The waiting line always follows the real stage of the work.
+function rotateLines() {
+  let index = 0;
+  const timer = setInterval(() => {
+    const line = view.querySelector('[data-line]');
+    if (!line) return;
+    const lines = STAGE_LINES[state.stage];
+    index += 1;
+    line.textContent = lines[index % lines.length];
+  }, 1700);
+  return () => clearInterval(timer);
+}
+
 async function runDesign({ image, answers, previous = null }) {
   if (store.credits < 1) {
     state.pendingRun = { image, answers, previous };
@@ -283,13 +303,17 @@ async function runDesign({ image, answers, previous = null }) {
   state.stage = 0;
   state.draft.photo = image;
   go('generating');
+  const startedAt = Date.now();
+  const stopLines = rotateLines();
+  const setStage = stage => {
+    state.stage = stage;
+    view.querySelector('[data-meter]')?.style.setProperty('width', STAGE_PROGRESS[stage] + '%');
+  };
   try {
     const plan = await post('plan', { image, context: preferences.map(item => `${item.label}: ${item.value}`).join('; '), answers });
-    state.stage = 1;
-    render();
+    setStage(1);
     const { items } = await post('products', { items: plan.items, budget: answers.budget });
-    state.stage = 2;
-    render();
+    setStage(2);
     const picks = items.map(item => item.products[0]?.title || item.name);
     const { imageUrl } = await post('render', { image, editPrompt: plan.editPrompt, products: picks });
     store.credits -= 1;
@@ -299,14 +323,16 @@ async function runDesign({ image, answers, previous = null }) {
     store.designs = [design, ...store.designs.filter(entry => entry.id !== design.id)].slice(0, 8);
     saveStore();
     state.result = previous ? design : { ...design, before: image };
+    await wait(MIN_WAIT_MS - (Date.now() - startedAt));
+    stopLines();
     go('result');
   } catch (error) {
+    stopLines();
     state.error = error.message;
     if (previous) {
       state.result = previous;
       go('result');
     } else {
-      state.step = STEPS.length - 1;
       go('create');
     }
   }
@@ -377,15 +403,20 @@ function toggleSaved(button) {
   render();
 }
 
+// Updates in place so the page and the side-scrolling rows keep their position.
 function pick(button) {
   const { draft } = state;
   const { pick: name, value } = button.dataset;
   if (name === 'changes') {
     draft.changes = draft.changes.includes(value) ? draft.changes.filter(item => item !== value) : [...draft.changes, value];
-  } else {
-    draft[name] = value;
+    button.setAttribute('aria-pressed', String(draft.changes.includes(value)));
+    return;
   }
-  render();
+  draft[name] = value;
+  for (const option of view.querySelectorAll(`[data-pick="${name}"]`)) {
+    option.setAttribute('aria-pressed', String(option === button));
+  }
+  if (name === 'budget') view.querySelector('[data-budget-hint]').textContent = `${value}. ${budgetHint(value)}`;
 }
 
 async function ask(text) {
@@ -422,18 +453,6 @@ const actions = {
     state.draft.photo = await resizeImage(blob, MAX_SIDE, 0.82);
     render();
   },
-  next() {
-    state.step += 1;
-    render();
-    window.scrollTo(0, 0);
-  },
-  back() {
-    if (state.step === 0) go('home');
-    else {
-      state.step -= 1;
-      render();
-    }
-  },
   clear() {
     store.designs = [];
     saveStore();
@@ -469,7 +488,6 @@ view.addEventListener('input', event => {
   if (event.target.type === 'range') event.target.closest('.compare').style.setProperty('--split', event.target.value + '%');
   if (event.target.dataset.note !== undefined) {
     state.draft.note = event.target.value;
-    view.querySelector('[data-act="next"]').disabled = !state.draft.changes.length && !state.draft.note.trim();
   }
 });
 
