@@ -1,64 +1,89 @@
-# Dream Room
+<p align="center">
+  <img src="docs/readme/banner.webp" alt="Dream Room. Snap your room, pick a style and shop every piece you see. A before and after living room with yellow price tags on the products." width="100%">
+</p>
 
-Dream Room is a mobile web app that redesigns the room you already have. Upload a photo, pick a style and budget, and see your room before and after, with real products and prices placed on the image.
+<p align="center">
+  <img src="https://img.shields.io/badge/AI-fal-FFDF32?style=for-the-badge&labelColor=23242A" alt="AI by fal">
+  <img src="https://img.shields.io/badge/Payments-RevenueCat-FFDF32?style=for-the-badge&labelColor=23242A" alt="Payments by RevenueCat">
+  <img src="https://img.shields.io/badge/Runs_on-Cloudflare-FFDF32?style=for-the-badge&labelColor=23242A" alt="Runs on Cloudflare">
+  <img src="https://img.shields.io/badge/Market-US-FFDF32?style=for-the-badge&labelColor=23242A" alt="Market US">
+</p>
 
-Built for the RevenueCat x Third Room x fal x Neon Apps AI Hackathon in November 2026, for the US market.
+<h3 align="center">The room you have, turned into the room you want. 🏡✨</h3>
 
-## How it works
+<p align="center">
+  Upload a photo, choose a style and a budget, and watch your room change.<br>
+  Every new piece comes with a real product, a real price and a link to the store.
+</p>
 
-1. The customer uploads a room photo and picks the room type, style, changes and budget on one page.
-2. An AI planner looks at the photo and decides what can change.
-3. A web search finds real products for each change, across any online store.
-4. fal renders the new room using those products.
-5. The result shows a before and after view, with a price on each product and a link to the store.
-6. The customer can keep refining the design or ask the design chat for advice.
+<br>
 
-The home page also shows a short video of a room transforming, followed by the prices of its products. That video is a prepared example. The live flow creates images, not video.
+## ✨ Watch a room transform
 
-## Plans
+<p align="center">
+  <img src="docs/readme/reveal.webp" alt="A plain bedroom turns into a finished living space, then yellow price tags appear on the sofa, coffee table, rug and floor lamp." width="640">
+</p>
+
+<p align="center"><sub>A prepared example made with MiniMax H3 on fal. The live flow creates images.</sub></p>
+
+## 🪄 How it works
+
+<p align="center">
+  <img src="docs/readme/steps.webp" alt="Four steps. Snap: upload a photo of the room you have. Style: pick a look, your changes and a budget. Dream: AI plans the room and fal renders it. Shop: tap a price to open the product page." width="100%">
+</p>
+
+Not quite right? Ask for a change and the room updates, or get advice from the design chat. 💬
+
+## 🎨 One room, your style
+
+<p align="center">
+  <img src="docs/readme/styles.webp" alt="Four example rooms with price tags on the products: Scandinavian, Modern, Bohemian and Industrial." width="100%">
+</p>
+
+## 💛 Plans
+
+<p align="center">
+  <img src="docs/readme/plans.webp" alt="Free: $0, 1 credit. Weekly: $9.99, 50 credits a week. Yearly, best value: $39.99, 300 credits up front. Credit pack: $4.99, 20 credits." width="100%">
+</p>
 
 Each generated image uses 1 credit. Payments run through RevenueCat Web Billing in sandbox mode, so no real money is charged.
 
-| Plan | Price | Credits |
-| --- | --- | --- |
-| Free | $0 | 1 |
-| Weekly | $9.99 | 50 per week |
-| Yearly | $39.99 | 300 per year, given up front |
-| Credit pack | $4.99 | 20 |
+## 🧰 Built with
 
-## Tech stack
+| | Tool | What it does |
+| :---: | --- | --- |
+| 🧠 | **Gemini 2.5 Flash** on fal | Plans the room, searches for products, finds them in the image, powers the chat |
+| 🖼️ | **FLUX Kontext** on fal | Redesigns the room photo |
+| 🎬 | **MiniMax H3** on fal | Made the home page video ahead of time |
+| 💳 | **RevenueCat** with Stripe sandbox | Plans, credits and checkout |
+| ☁️ | **Cloudflare Workers** | Routing and the API |
+| 🍦 | **Plain JavaScript** | The whole front end, with no build step |
 
-- Static front end in plain JavaScript, with no build step
-- Cloudflare Worker for routing and the API
-- fal for all AI work:
-  - `openrouter/router/vision` with Gemini 2.5 Flash for planning, product search, chat and finding items in the image
-  - `fal-ai/flux-pro/kontext` for editing the room photo
-  - `minimax/h3/image-to-video` for the home page video, made ahead of time
-- RevenueCat Web Billing with Stripe sandbox
-
-## Run locally
+## 🚀 Run it locally
 
 You need Node.js and a [fal API key](https://fal.ai/dashboard/keys).
 
-1. Create a `.dev.vars` file in the project root. Git ignores this file.
+**1.** Create a `.dev.vars` file in the project root. Git ignores this file.
 
-   ```
-   FAL_KEY=your_key_here
-   ```
+```
+FAL_KEY=your_key_here
+```
 
-2. Start the local server:
+**2.** Start the server.
 
-   ```sh
-   npx wrangler dev
-   ```
+```sh
+npx wrangler dev
+```
 
-3. Open http://localhost:8787. First-time visitors go through onboarding, then land in the app.
+**3.** Open http://localhost:8787. First-time visitors go through onboarding, then land in the app.
 
-Without the key the app opens but cannot create designs.
+> [!TIP]
+> To test a payment, use the Stripe test card `4242 4242 4242 4242` with any future expiry date and any CVC.
 
-To test a payment, use the Stripe test card `4242 4242 4242 4242` with any future expiry date and any CVC.
+> [!IMPORTANT]
+> `FAL_KEY` stays on the server. The key in `public/app/config.js` is RevenueCat's public sandbox key, which is meant to run in the browser. Never put a secret key in `public/`.
 
-## Project structure
+## 🗂️ Project map
 
 ```
 public/app/          Home, Create, Result, Designs, Chat and Settings
@@ -71,29 +96,19 @@ scripts/             Image generation for the example rooms
 docs/                Design template, team plan and pitch outline
 ```
 
-## Keys
+To deploy, run `npx wrangler deploy` with access to the Cloudflare account for `getwaia.com`.
 
-`FAL_KEY` stays on the server, in `.dev.vars` locally and as a Cloudflare secret in production. The key in `public/app/config.js` is RevenueCat's public sandbox key, which is meant to run in the browser. Never put a secret key in `public/`.
+## 🌱 What comes next
 
-## Deploy
+- [ ] Move credit and plan checks to the server, they run in the browser today
+- [ ] Verify product links and prices, they come from a web search and can go out of date
+- [ ] Place the exact product in the room, rendered pieces look similar but are not exact copies
+- [ ] Offer video reveals in the live flow
+- [ ] Add store affiliate links
 
-Run this with access to the Cloudflare account for `getwaia.com`:
+<br>
 
-```sh
-npx wrangler deploy
-```
-
-## Known limits
-
-- Credits and plans are checked in the browser, not on the server.
-- Product links and prices come from a web search and can go out of date. Links that return a 404 fall back to a shopping search.
-- Rendered products look like the real ones but are not exact copies.
-
-## Next steps
-
-- Move credit and plan checks to the server
-- Verify product links and prices
-- Add store affiliate links
-- Offer video reveals in the live flow
-
-See [HANDOFF.md](HANDOFF.md) for more project notes.
+<p align="center">
+  Built in one day at the <b>RevenueCat x Third Room x fal x Neon Apps AI Hackathon</b>, November 2026 💛<br>
+  <sub>More project notes in <a href="HANDOFF.md">HANDOFF.md</a></sub>
+</p>
