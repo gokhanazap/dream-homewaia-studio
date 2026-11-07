@@ -31,3 +31,91 @@
   .preview-product { grid-template-columns: 42px minmax(0, 1fr); }
   .preview-product a { grid-column: 2; }
 }
+
+:root {
+  --paper: #fff;
+  --card: #fff;
+  --ink: #23242a;
+  --muted: #5f6068;
+  --line: #e6e6e9;
+  --rust: #8a6500;
+  --rust-dark: #634800;
+  --blush: #fff7d4;
+  --serif: var(--sans);
+  --sunburst: #ffdf32;
+  --sunburst-hover: #f4ce19;
+}
+
+.site { max-width: 570px; }
+.flow {
+  min-height: 100svh;
+  border: 0;
+  padding: clamp(20px, 4svh, 48px) 0 max(18px, env(safe-area-inset-bottom));
+}
+.intro { margin: 0 0 clamp(14px, 2.4svh, 26px); text-align: left; }
+.intro h1 { font-weight: 800; font-size: clamp(30px, 8vw, 46px); text-wrap: initial; }
+.intro h1 em { color: inherit; font-style: normal; }
+.intro p { max-width: none; margin: 10px 0 0; }
+.flow .toolbar { margin-bottom: 16px; }
+.paywall-toolbar { justify-content: flex-end; }
+.steps span { background: var(--line); }
+.steps .done { background: #f3da79; }
+.steps .current { background: var(--sunburst); }
+.choice, .plan { background: var(--card); }
+.choice { min-height: 62px; border-radius: 14px; }
+.choice-label { font-size: 16px; }
+.choice:hover, .plan:hover,
+.choice:has(input:checked), .plan:has(input:checked) { background: var(--blush); }
+.choice-check, .plan-radio { border-color: #85858d; }
+
+.flow .primary {
+  min-height: 56px;
+  border-radius: 14px;
+  background: var(--sunburst);
+  color: var(--ink);
+  font-size: 17px;
+  box-shadow: none;
+}
+.flow .primary:not(:disabled):hover { background: var(--sunburst-hover); }
+.flow .primary:disabled { background: #f2f2f4; color: var(--muted); }
+.flow[data-step="welcome"] .flow-body { display: flex; flex: 1; flex-direction: column; }
+.makeover {
+  flex: 1;
+  min-height: 300px;
+  max-height: 690px;
+  border-radius: 19px;
+}
+.makeover img { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; }
+.makeover-prices {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(0 0 0 var(--split));
+  pointer-events: none;
+}
+.makeover-price {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  padding: 5px 11px;
+  background: var(--sunburst);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px #0004;
+}
+.pendant-price { top: 19%; left: 61%; }
+.bench-price { top: 70%; left: 82%; }
+.makeover .compare-line { width: 4px; background: #fff; }
+.makeover .compare-line span {
+  width: 42px;
+  height: 42px;
+  transform: translateX(-19px);
+  border: 2px solid #fff;
+  background: #25252a55;
+  color: #fff;
+  font-size: 21px;
+}
+.makeover .image-tag { background: #25252ab8; color: #fff; }
+.makeover input { touch-action: pan-y; }
+.flow[data-step="welcome"] .actions { position: static; padding-top: clamp(14px, 2.4svh, 26px); }
+.paywall-image { border-radius: 18px; }

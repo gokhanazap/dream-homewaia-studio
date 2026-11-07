@@ -36,3 +36,29 @@
 .room-thumb img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
 .room-thumb span { display: block; padding: 8px 10px; font-size: 13px; }
 .room-saved a { color: var(--rust-dark); text-align: right; }
+
+#dialog:has([data-buy]) {
+  --paper: #fff;
+  --card: #fff;
+  --ink: #23242a;
+  --muted: #5f6068;
+  --line: #e6e6e9;
+  --rust: #8a6500;
+  --rust-dark: #634800;
+  --blush: #fff7d4;
+  --serif: var(--sans);
+}
+#dialog:has([data-buy]) h2 { font-weight: 800; }
+#dialog:has([data-buy]) .plan { background: var(--card); }
+#dialog:has([data-buy]) .plan:has(input:checked),
+#dialog:has([data-buy]) .plan:hover { background: var(--blush); }
+#dialog [data-buy] {
+  margin-top: 14px;
+  min-height: 56px;
+  border-radius: 14px;
+  background: #ffdf32;
+  color: var(--ink);
+  font-size: 17px;
+  box-shadow: none;
+}
+#dialog [data-buy]:hover { background: #f4ce19; }

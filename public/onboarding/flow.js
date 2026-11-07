@@ -1,13 +1,13 @@
 const flow = document.querySelector('#flow');
 
 const steps = [
-  { id: 'welcome', label: 'Welcome', title: 'See what your room <em>could be.</em>', desc: 'Reimagine your room from a photo and shop pieces that complete the look.', next: 'Get started' },
+  { id: 'welcome', label: 'Welcome', title: 'AI Interior Design<br>&amp; Remodeling' },
   { id: 'goal', label: 'Goal', title: 'What would you like <em>to change?</em>', desc: 'Choose the option that fits your project.', choices: [['✦', 'Refresh my current room', 'Mevcut odamı yenilemek'], ['⌂', 'Furnish an empty room', 'Boş bir odayı dekore etmek'], ['◷', 'Find the finishing touches', 'Eksik parçaları tamamlamak'], ['◇', 'Explore new ideas', 'Yeni fikirler keşfetmek']] },
   { id: 'room', label: 'Room', title: 'Which room are <em>you designing?</em>', desc: 'Choose a room to start with.', layout: 'tiles', choices: [['▰', 'Living room', 'Salon'], ['▥', 'Bedroom', 'Yatak odası'], ['◫', 'Kitchen', 'Mutfak'], ['◩', 'Dining room', 'Yemek odası'], ['▤', 'Home office', 'Çalışma odası'], ['＋', 'Other', 'Diğer']] },
   { id: 'mood', label: 'Mood', title: 'How should your room <em>feel?</em>', desc: 'Choose how you want to feel when you walk in.', choices: [['☼', 'Warm and cozy', 'Sıcak ve rahat'], ['✧', 'Elegant and refined', 'Şık ve zarif'], ['◈', 'Colorful and creative', 'Renkli ve yaratıcı'], ['≈', 'Calm and airy', 'Sakin ve ferah'], ['♡', 'Relaxed and inviting', 'Samimi ve davetkâr']] },
   { id: 'challenge', label: 'Priorities', title: 'What would <em>help most?</em>', desc: 'Select all that apply.', multiple: true, choices: [['$', 'Options within my budget', 'Bütçeme uygun seçenekler'], ['◷', 'Ideas for bare walls', 'Boş duvarlar için fikir'], ['☼', 'Better lighting', 'Daha iyi aydınlatma'], ['◫', 'See pieces in my room first', 'Eşyaları odamda önceden görmek'], ['✦', 'Pieces that work together', 'Birbiriyle uyumlu parçalar']] },
   { id: 'style', label: 'Style', title: 'What’s <em>your style?</em>', desc: 'Choose a style for your first design.', layout: 'styles', choices: [['01', 'Minimalist'], ['02', 'Modern'], ['03', 'Bohemian', 'Bohem'], ['04', 'Traditional', 'Klasik']] },
-  { id: 'before-after', label: 'Shoppable preview', title: 'See it in the room. <em>Shop the same piece.</em>', desc: 'Slide to see a real Amazon wall clock on the blank wall. The product below is the one shown in the preview.', next: 'See plans' },
+  { id: 'before-after', label: 'Shoppable preview', title: 'See it in the room. <em>Shop the same piece.</em>', desc: 'Slide to see a real Amazon wall clock on the blank wall. The product below is the one shown in the preview.' },
   { id: 'paywall', label: 'Waia Plus', title: 'More ideas <em>for your space.</em>', desc: 'Explore more design ideas for every corner with Waia Plus.' },
 ];
 
@@ -56,8 +56,8 @@ function go(next) {
 }
 
 function toolbar(step) {
-  if (step.id === 'welcome') return '<div class="toolbar welcome-toolbar"><span class="eyebrow"><span class="dot"></span> AI INTERIOR DESIGN</span><button data-action="skip-all" class="quiet">Skip</button></div>';
-  if (step.id === 'paywall') return '<div class="toolbar"><span class="eyebrow"><span class="dot"></span> WAIA PLUS</span><button data-action="open-app" class="round" aria-label="Close plan selection">×</button></div>';
+  if (step.id === 'welcome') return '';
+  if (step.id === 'paywall') return '<div class="toolbar paywall-toolbar"><button data-action="open-app" class="round" aria-label="Close plan selection">×</button></div>';
   const count = steps.findIndex(item => item.id === 'paywall') - 1;
   const bars = Array.from({ length: count }, (_, n) => '<span class="' + (n + 1 < index ? 'done' : n + 1 === index ? 'current' : '') + '"></span>').join('');
   return '<div class="toolbar"><button class="round" data-action="back" aria-label="Back">←</button><div class="steps" aria-label="Step ' + index + ' / ' + count + '">' + bars + '</div><button class="quiet" data-action="skip">Skip</button></div>';
@@ -117,7 +117,17 @@ function openApp(chosenPlan) {
 function content(step) {
   if (step.choices) return choices(step);
   switch (step.id) {
-    case 'welcome': return `<div class="welcome-image"><img src="./assets/room-before.webp" alt="Furnished sample living room with a blank wall" width="1184" height="880"><span class="image-tag">✦ &nbsp; SAMPLE LIVING ROOM</span></div><div class="hint"><span>◷</span><div><strong>Find pieces you can buy</strong><small>See a product in the room, then open its store listing.</small></div></div>`;
+    case 'welcome': return `<div class="compare makeover" style="--split: 50%">
+      <img src="./assets/makeover-after.jpg" alt="Renovated entryway with blue walls and patterned tiles" width="832" height="1248" fetchpriority="high">
+      <div class="makeover-prices" role="group" aria-label="Illustrative product prices">
+        <span class="makeover-price pendant-price"><span class="sr-only">Pendant light, </span>$47</span>
+        <span class="makeover-price bench-price"><span class="sr-only">Entryway bench, </span>$78</span>
+      </div>
+      <img class="compare-before" src="./assets/makeover-before.jpg" alt="The same entryway before renovation, with peeling plaster and a bare floor" width="768" height="1152" fetchpriority="high">
+      <span class="image-tag compare-left">Before</span><span class="image-tag compare-right">After</span>
+      <span class="compare-line" aria-hidden="true"><span>‹ ›</span></span>
+      <input type="range" min="0" max="100" value="50" aria-label="Compare the entryway before and after renovation">
+    </div>`;
     case 'before-after': return preview();
     case 'paywall': return paywall();
     default: return '';
@@ -125,21 +135,48 @@ function content(step) {
 }
 
 function actions(step) {
-  if (step.id === 'paywall') return '<div class="actions"><button class="primary" data-action="select-plan">Choose plan <span>→</span></button><button class="quiet footer-skip" data-action="open-app">Continue to free demo</button></div>';
+  if (step.id === 'paywall') return '<div class="actions"><button class="primary" data-action="select-plan">Continue</button><button class="quiet footer-skip" data-action="open-app">Continue to free demo</button></div>';
   const disabled = step.choices && !answers[step.id]?.length ? 'disabled' : '';
   const note = step.choices ? '<p class="action-note">✧ &nbsp; You can change your choices anytime.</p>' : '';
-  return `<div class="actions"><button class="primary" data-action="next" ${disabled}>${step.next || 'Continue'} <span>→</span></button>
+  return `<div class="actions"><button class="primary" data-action="next" ${disabled}>Continue</button>
     ${note}</div>`;
+}
+
+function updateSplit(slider) {
+  slider.closest('.compare').style.setProperty('--split', slider.value + '%');
+}
+
+function animateMakeover() {
+  const slider = flow.querySelector('.makeover input');
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const start = performance.now();
+  let frame;
+
+  function tick(now) {
+    if (!slider.isConnected || motion.matches) return;
+    slider.value = 50 + 32 * Math.sin((now - start) * Math.PI / 2200);
+    updateSplit(slider);
+    frame = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    cancelAnimationFrame(frame);
+  }
+
+  slider.addEventListener('pointerdown', stop);
+  slider.addEventListener('focus', stop);
+  if (!motion.matches) frame = requestAnimationFrame(tick);
 }
 
 function render() {
   const step = steps[index];
   flow.dataset.step = step.id;
-  flow.innerHTML = `${toolbar(step)}
-    <div class="flow-body">
-      <header class="intro"><h1 tabindex="-1">${step.title}</h1><div class="ornament" aria-hidden="true">✦</div><p>${step.desc}</p></header>
+  flow.innerHTML = `<div class="flow-body">
+      <header class="intro"><h1 tabindex="-1">${step.title}</h1>${step.desc ? `<p>${step.desc}</p>` : ''}</header>
+      ${toolbar(step)}
       ${content(step)}
     </div>${actions(step)}`;
+  if (step.id === 'welcome') animateMakeover();
 }
 
 flow.addEventListener('change', event => {
@@ -154,7 +191,7 @@ flow.addEventListener('change', event => {
 });
 
 flow.addEventListener('input', event => {
-  if (event.target.type === 'range') event.target.closest('.compare').style.setProperty('--split', event.target.value + '%');
+  if (event.target.type === 'range') updateSplit(event.target);
 });
 
 flow.addEventListener('click', event => {
@@ -168,7 +205,6 @@ flow.addEventListener('click', event => {
       saveAnswers();
       go(index + 1);
       break;
-    case 'skip-all': go(steps.findIndex(step => step.id === 'before-after')); break;
     case 'select-plan': openApp(plan); break;
     case 'open-app': openApp(null); break;
   }
