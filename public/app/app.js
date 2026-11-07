@@ -62,6 +62,17 @@ function readContext() {
   }
 }
 
+// One entry point: first-time visitors go through setup before the app.
+function hasOnboarded() {
+  try {
+    return localStorage.getItem('dream-room-onboarded') === '1';
+  } catch {
+    return true;
+  }
+}
+
+if (!hasOnboarded()) window.location.replace('../onboarding/');
+
 const context = readContext();
 const preferences = Array.isArray(context.preferences) ? context.preferences.filter(item => typeof item?.label === 'string' && typeof item?.value === 'string') : [];
 const store = loadStore();
@@ -232,7 +243,7 @@ function designsView() {
 
 function chatView() {
   const log = state.chat.map(message => `<p class="bubble ${message.from}">${escapeHtml(message.text)}</p>`).join('');
-  const suggestions = state.chat.length ? '' : `<div class="card"><h2>Hi, I'm Dream Room.</h2><p class="muted">How can I help with your space?</p>${QUESTIONS.map(question => `<button class="suggestion" data-ask="${escapeHtml(question)}"><span>${escapeHtml(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div>`;
+  const suggestions = state.chat.length ? '' : `<div class="card"><h2>Hi, I'm your design assistant.</h2><p class="muted">How can I help with your space?</p>${QUESTIONS.map(question => `<button class="suggestion" data-ask="${escapeHtml(question)}"><span>${escapeHtml(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div>`;
   return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Ask Dream Room</span><span></span></header>
     ${suggestions}<div class="chat-log">${log}${state.chatBusy ? '<p class="bubble waia" role="status">Thinking…</p>' : ''}</div>
     <form class="composer" data-chat><label class="sr-only" for="chat-input">Ask Dream Room</label><input id="chat-input" autocomplete="off" maxlength="400" placeholder="Ask Dream Room anything" ${state.chatBusy ? 'disabled' : ''}><button aria-label="Send" ${state.chatBusy ? 'disabled' : ''}>↑</button></form>`;
@@ -515,11 +526,10 @@ isPro().then(pro => {
   refill();
   render();
   // The onboarding CTA starts checkout once, even if the app is reloaded.
-  if (context.checkoutPlan === 'annual') {
+  const { checkoutPlan } = context;
+  if (checkoutPlan) {
     delete context.checkoutPlan;
     try { sessionStorage.setItem('waia-room-demo-context', JSON.stringify(context)); } catch {}
-    if (!pro) purchase('annual');
-    return;
+    if (checkoutPlan === 'pack' || !pro) purchase(checkoutPlan);
   }
-  if (!pro && (context.plan === 'weekly' || context.plan === 'annual')) openPaywall(context.plan);
 });

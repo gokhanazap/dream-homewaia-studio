@@ -14,11 +14,11 @@ Start each piece of work from the latest `main`. Use a branch per owner, push ea
 
 ## Integration contract
 
-Onboarding collects a few room and style preferences, then shows a prepared before-and-after example. The sample uses the [same Bernhard wall clock listed on Amazon.com](https://www.amazon.com/dp/B01HONVHZ2) in the room preview and the product card. The preview leads straight to the paywall. Photo capture, analysis, and image generation belong in the app after entry.
+Onboarding collects a few room and style preferences and shows a shoppable example. Then it opens the app or RevenueCat checkout for the chosen plan.
 
 Choosing a plan or continuing for free opens `/app/`. The setup page passes the optional plan and the selected preferences through the same-origin session storage key `waia-room-demo-context`. The app also opens directly without setup. The existing `/onboarding/?demo` link redirects to `/app/`.
 
-The paywall shows Weekly at $9.99 and Yearly at $39.99. These are demo prices. Payment integration is a separate work item.
+Each new room image uses one credit. New users get 1 free credit. Yearly is $39.99 with 300 credits up front, Weekly is $9.99 with 50 credits every week, and the pack is $4.99 for 20 credits. Payments run in RevenueCat sandbox mode.
 
 ## MVP priorities
 
@@ -27,4 +27,4 @@ The paywall shows Weekly at $9.99 and Yearly at $39.99. These are demo prices. P
 3. Add fit and budget support. An initial calculator can use the user's wall or sofa width and filter product suggestions by dimensions in inches. A budget indicator can compare selected items with the user's dollar budget.
 4. Prepare the pitch, a demo QR code, and a recording of the prepared flow.
 
-The fit calculator, live photo processing, billing, and affiliate revenue are future work until those features are wired into the public demo.
+The fit calculator, server-side credits and affiliate revenue are future work.

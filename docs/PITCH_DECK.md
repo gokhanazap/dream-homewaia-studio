@@ -25,7 +25,7 @@ Use the room images in `public/assets/` for the deck and add a QR code that open
 1. Open the sample living room and show the original photo.
 2. Select **Show the makeover**.
 3. Tap the clock, then open the floor lamp in **Products**.
-4. Show the two Amazon.com alternatives for each item.
+4. Show products from different online stores for each item.
 
 Use the prepared example for the public demo. Add photo capture, fit guidance, or a budget total to the presentation once those features work in the demo.
 
@@ -40,8 +40,8 @@ Use the prepared example for the public demo. Add photo capture, fit guidance, o
 
 ## 6. Business model
 
-The prototype shows Weekly at **$9.99** and Yearly at **$39.99**. A free demo lets visitors see the room and explore product links. Subscription billing and affiliate revenue are planned.
+Each new room image uses one credit. Yearly is **$39.99** with 300 credits up front, Weekly is **$9.99** with 50 credits every week, and a pack adds 20 credits for **$4.99**. The first design is free.
 
 ## 7. What comes next
 
-The next milestone is generating a makeover from the customer's own photo. After that, add fit and budget filters and validate the Amazon cart experience. End on the demo QR code.
+Next, move credits to the server, add fit and budget checks, and turn product links into affiliate revenue.

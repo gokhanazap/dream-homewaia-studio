@@ -103,6 +103,7 @@ function preferences() {
 
 function openApp(checkoutPlan) {
   try {
+    localStorage.setItem('dream-room-onboarded', '1');
     sessionStorage.setItem('waia-room-demo-context', JSON.stringify({
       preferences: preferences(),
       checkoutPlan,
@@ -174,7 +175,7 @@ function render() {
       ${content(step)}
     </div>${actions(step)}`;
   if (step.id === 'welcome') animateMakeover();
-  if (step.id === 'paywall') mountPaywall(flow.querySelector('.plus-paywall'), () => openApp('annual'));
+  if (step.id === 'paywall') mountPaywall(flow.querySelector('.plus-paywall'), openApp);
 }
 
 flow.addEventListener('change', event => {

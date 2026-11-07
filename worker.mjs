@@ -3,6 +3,10 @@ import { roomApi } from './room-api.mjs';
 export default {
   fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === '/') {
+      url.pathname = '/app/';
+      return Response.redirect(url, 302);
+    }
     if (/^\/onboarding\/?$/.test(url.pathname) && url.searchParams.has('demo')) {
       url.pathname = '/app/';
       url.searchParams.delete('demo');

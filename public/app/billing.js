@@ -35,11 +35,6 @@ export async function isPro() {
   }
 }
 
-export async function annualPlanPrice() {
-  const { annual } = await packages();
-  return usd(annual);
-}
-
 async function packages() {
   const offering = (await (await client()).getOfferings({ currency: 'USD' })).current;
   if (!offering?.weekly || !offering?.annual || !offering?.lifetime) throw new Error('Plans are not available.');

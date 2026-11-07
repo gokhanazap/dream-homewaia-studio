@@ -1,4 +1,4 @@
-import { annualPlanPrice } from '../app/billing.js';
+import { planPrices } from '../app/billing.js';
 import { CREDITS } from '../app/config.js';
 
 const slides = [
@@ -9,9 +9,9 @@ const slides = [
 ];
 
 const plans = [
-  ['lifetime', 'Lifetime', '$129.99', 'One-time payment'],
-  ['annual', 'Yearly', '$39.99', 'Renews yearly'],
-  ['monthly', 'Monthly', '$9.99', 'Renews monthly'],
+  ['annual', 'Yearly', '$39.99', `${CREDITS.annual} credits right away`],
+  ['weekly', 'Weekly', '$9.99', `${CREDITS.weekly} credits every week`],
+  ['pack', 'Credit pack', '$4.99', `${CREDITS.pack} credits, no renewal`],
 ];
 
 export function paywallMarkup() {
@@ -24,7 +24,7 @@ export function paywallMarkup() {
     </div>
     <h3>What’s included</h3>
     <ul class="plus-benefits">
-      <li>${CREDITS.annual} home transformations right away</li>
+      <li>Each credit creates one new room design</li>
       <li>Access to all design features</li>
       <li>Explore different styles in your own room</li>
       <li>Shop product picks and save your favorite designs</li>
@@ -33,7 +33,7 @@ export function paywallMarkup() {
       <legend class="sr-only">Dream Room Plus plan</legend>
       ${plans.map(([id, title, price, terms]) => `<label class="plus-plan">
         <input type="radio" name="plus-plan" value="${id}" disabled>
-        <strong>${title}</strong><b data-price>${price}</b><small>${terms}</small><small data-availability>${id === 'annual' ? 'Checking availability…' : 'Demo preview'}</small>
+        <strong>${title}</strong><b data-price>${price}</b><small>${terms}</small><small data-availability></small>
       </label>`).join('')}
     </fieldset>
     <button type="button" class="primary plus-continue" disabled>Continue</button>
@@ -56,21 +56,20 @@ export async function mountPaywall(root, openCheckout) {
 
   const button = root.querySelector('.plus-continue');
   const status = root.querySelector('.plus-status');
-  const annual = root.querySelector('input[value="annual"]');
-  const card = annual.closest('label');
+  const options = [...root.querySelectorAll('input[name="plus-plan"]')];
   try {
-    const price = await annualPlanPrice();
-    card.querySelector('[data-price]').textContent = price;
-    card.querySelector('[data-availability]').textContent = '';
-    annual.disabled = false;
-    annual.checked = true;
+    const prices = await planPrices();
+    for (const option of options) {
+      option.closest('label').querySelector('[data-price]').textContent = prices[option.value];
+      option.disabled = false;
+    }
+    options[0].checked = true;
     button.disabled = false;
     button.addEventListener('click', () => {
       button.disabled = true;
-      openCheckout();
+      openCheckout(options.find(option => option.checked).value);
     });
   } catch {
-    card.querySelector('[data-availability]').textContent = 'Temporarily unavailable';
     status.textContent = 'Plans could not be loaded. You can still continue to the free demo.';
   }
 }
