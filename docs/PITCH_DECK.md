@@ -1,10 +1,10 @@
-# Waia Studio pitch outline
+# Dream Room pitch outline
 
 Use the room images in `public/assets/` for the deck and add a QR code that opens [the demo](https://getwaia.com/app/). Keep the on-screen text brief and the speaking notes separate.
 
 ## 1. Cover
 
-**On screen.** Waia Studio. Find the pieces that complete your room.
+**On screen.** Dream Room. Find the pieces that complete your room.
 
 **Visual.** Use `room-after.webp` and place the demo QR code where it can be scanned.
 

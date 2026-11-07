@@ -10,7 +10,7 @@ const steps = [
   { id: 'challenge', label: 'Priorities', title: 'What would <em>help most?</em>', desc: 'Select all that apply.', multiple: true, choices: [['$', 'Options within my budget', 'Bütçeme uygun seçenekler'], ['◷', 'Ideas for bare walls', 'Boş duvarlar için fikir'], ['☼', 'Better lighting', 'Daha iyi aydınlatma'], ['◫', 'See pieces in my room first', 'Eşyaları odamda önceden görmek'], ['✦', 'Pieces that work together', 'Birbiriyle uyumlu parçalar']] },
   { id: 'style', label: 'Style', title: 'What’s <em>your style?</em>', desc: 'Choose a style for your first design.', layout: 'styles', choices: [['01', 'Minimalist'], ['02', 'Modern'], ['03', 'Bohemian', 'Bohem'], ['04', 'Traditional', 'Klasik']] },
   { id: 'before-after', label: 'Shoppable preview', title: 'See it in the room. <em>Shop the same piece.</em>', desc: 'Slide to see a real Amazon wall clock on the blank wall. The product below is the one shown in the preview.' },
-  { id: 'paywall', label: 'Waia Plus', title: 'Make every room yours.' },
+  { id: 'paywall', label: 'Dream Room Plus', title: 'Make every room yours.' },
 ];
 
 const storageKey = 'waia-room-answers-v1';

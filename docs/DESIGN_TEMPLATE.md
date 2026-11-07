@@ -1,4 +1,4 @@
-# Waia Studio tasarım şablonu
+# Dream Room tasarım şablonu
 
 Beyaz zemin, koyu metin ve Sunburst sarısı. Bir ekranda tek bir soru, bir slaytta tek bir mesaj. Sol hizalı başlıklar ve geniş boşluklar kullan.
 

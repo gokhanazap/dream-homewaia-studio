@@ -15,7 +15,7 @@ const plans = [
 ];
 
 export function paywallMarkup() {
-  return `<section class="plus-paywall" aria-label="Waia Plus">
+  return `<section class="plus-paywall" aria-label="Dream Room Plus">
     <div class="plus-gallery" role="region" aria-label="Design examples">
       <div class="plus-slides" tabindex="0" aria-label="Scroll horizontally to see four design examples">
         ${slides.map(([image, title, alt]) => `<figure><img src="./assets/${image}" alt="${alt}"><figcaption>${title}</figcaption></figure>`).join('')}
@@ -30,7 +30,7 @@ export function paywallMarkup() {
       <li>Shop product picks and save your favorite designs</li>
     </ul>
     <fieldset class="plus-plans">
-      <legend class="sr-only">Waia Plus plan</legend>
+      <legend class="sr-only">Dream Room Plus plan</legend>
       ${plans.map(([id, title, price, terms]) => `<label class="plus-plan">
         <input type="radio" name="plus-plan" value="${id}" disabled>
         <strong>${title}</strong><b data-price>${price}</b><small>${terms}</small><small data-availability>${id === 'annual' ? 'Checking availability…' : 'Demo preview'}</small>

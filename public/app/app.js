@@ -113,7 +113,7 @@ function creditLabel() {
 function homeView() {
   return `<header class="topbar">
       <button class="pill" data-act="upgrade">${creditLabel()}</button>
-      <span class="topbar-title">Waia</span>
+      <span class="topbar-title">Dream Room</span>
       <button class="icon-button" data-go="settings" aria-label="Settings">⚙</button>
     </header>
     <section class="hero"><h1>Complete the room <em>you already have.</em></h1></section>
@@ -228,17 +228,17 @@ function designsView() {
 
 function chatView() {
   const log = state.chat.map(message => `<p class="bubble ${message.from}">${escapeHtml(message.text)}</p>`).join('');
-  const suggestions = state.chat.length ? '' : `<div class="card"><h2>Hi, I'm Waia.</h2><p class="muted">How can I help with your space?</p>${QUESTIONS.map(question => `<button class="suggestion" data-ask="${escapeHtml(question)}"><span>${escapeHtml(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div>`;
-  return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Ask Waia</span><span></span></header>
+  const suggestions = state.chat.length ? '' : `<div class="card"><h2>Hi, I'm Dream Room.</h2><p class="muted">How can I help with your space?</p>${QUESTIONS.map(question => `<button class="suggestion" data-ask="${escapeHtml(question)}"><span>${escapeHtml(question)}</span><span aria-hidden="true">›</span></button>`).join('')}</div>`;
+  return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Ask Dream Room</span><span></span></header>
     ${suggestions}<div class="chat-log">${log}${state.chatBusy ? '<p class="bubble waia" role="status">Thinking…</p>' : ''}</div>
-    <form class="composer" data-chat><label class="sr-only" for="chat-input">Ask Waia</label><input id="chat-input" autocomplete="off" maxlength="400" placeholder="Ask Waia anything" ${state.chatBusy ? 'disabled' : ''}><button aria-label="Send" ${state.chatBusy ? 'disabled' : ''}>↑</button></form>`;
+    <form class="composer" data-chat><label class="sr-only" for="chat-input">Ask Dream Room</label><input id="chat-input" autocomplete="off" maxlength="400" placeholder="Ask Dream Room anything" ${state.chatBusy ? 'disabled' : ''}><button aria-label="Send" ${state.chatBusy ? 'disabled' : ''}>↑</button></form>`;
 }
 
 function settingsView() {
   const prefs = preferences.map(item => `<li><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong></li>`).join('');
   const saved = store.saved.map(item => `<li><span>${escapeHtml(item.item)}</span><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}${item.store ? ' · ' + escapeHtml(item.store) : ''} ↗</a></li>`).join('');
   return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Settings</span><span></span></header>
-    <section class="card"><h2>${state.pro ? 'Waia Plus' : 'Free plan'}</h2><p class="muted">${creditLabel()} left. Each new room image uses 1 credit.</p><button class="primary" data-act="upgrade">${state.pro ? 'Buy more credits' : 'Get more credits'}</button></section>
+    <section class="card"><h2>${state.pro ? 'Dream Room Plus' : 'Free plan'}</h2><p class="muted">${creditLabel()} left. Each new room image uses 1 credit.</p><button class="primary" data-act="upgrade">${state.pro ? 'Buy more credits' : 'Get more credits'}</button></section>
     <section class="item"><h2>Saved products</h2>${saved ? `<ul class="list">${saved}</ul>` : '<p class="muted">Save products from a design to compare them later.</p>'}</section>
     ${prefs ? `<section class="item"><h2>Your preferences</h2><ul class="list">${prefs}</ul></section>` : ''}
     <a class="link plain" href="../onboarding/">Back to setup</a>`;

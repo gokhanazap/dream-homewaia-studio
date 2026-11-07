@@ -5,7 +5,7 @@ const PLANNER_MODEL = 'google/gemini-2.5-flash';
 const SEARCH_MODEL = 'google/gemini-2.5-flash:online';
 const MAX_IMAGE_CHARS = 3_000_000;
 
-const PLANNER_PROMPT = `You are Waia, a room design assistant for US customers. You receive a photo of the customer's room and their answers.
+const PLANNER_PROMPT = `You are Dream Room, a room design assistant for US customers. You receive a photo of the customer's room and their answers.
 Find the revisions this room can realistically take, based on what you see and what they asked for.
 Return only JSON with this shape:
 {"summary":"...","editPrompt":"...","items":[{"name":"...","reason":"...","query":"..."}]}
@@ -14,7 +14,7 @@ editPrompt: instruction for an image editor. Start with "Keep the exact room, wa
 items: 2 to 4 products to buy for those changes. name is a short product type. reason says why it fits this room. query is an Amazon search phrase with material, color and size.
 Respect the budget. Do not invent brands or prices.`;
 
-const CHAT_PROMPT = `You are Waia, a friendly interior design assistant for US customers. Give short, practical advice in under 90 words. Do not invent prices or brands.`;
+const CHAT_PROMPT = `You are Dream Room, a friendly interior design assistant for US customers. Give short, practical advice in under 90 words. Do not invent prices or brands.`;
 
 function searchPrompt(items, budget) {
   const list = items.map((item, index) => `${index + 1}. ${item.query}`).join('\n');
@@ -162,15 +162,15 @@ async function render(body, key) {
 
 async function chat(body, key) {
   const messages = Array.isArray(body.messages) ? body.messages.slice(-8) : [];
-  const transcript = messages.map(message => `${message.from === 'you' ? 'Customer' : 'Waia'}: ${clip(message.text, 400)}`).join('\n');
+  const transcript = messages.map(message => `${message.from === 'you' ? 'Customer' : 'Dream Room'}: ${clip(message.text, 400)}`).join('\n');
   if (!transcript) return json({ error: 'Ask a question first.' }, 400);
   const result = await callFal(VISION_URL, key, {
     model: PLANNER_MODEL,
     system_prompt: CHAT_PROMPT,
-    prompt: transcript + '\nWaia:',
+    prompt: transcript + '\nDream Room:',
     image_urls: [],
   });
-  return json({ reply: clip(String(result.output).replace(/^\s*Waia:\s*/, ''), 700) });
+  return json({ reply: clip(String(result.output).replace(/^\s*Dream Room:\s*/, ''), 700) });
 }
 
 const routes = { plan, products, render, chat };

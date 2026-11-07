@@ -1,6 +1,6 @@
-# Waia Studio project handoff
+# Dream Room project handoff
 
-Waia Studio is a mobile web prototype for the US market. It shows how a few useful additions can complete an existing room. The sample living room adds a wall clock and floor lamp. Each item opens two similar products on Amazon.com.
+Dream Room is a mobile web prototype for the US market. It shows how a few useful additions can complete an existing room. The sample living room adds a wall clock and floor lamp. Each item opens two similar products on Amazon.com.
 
 - [Onboarding and paywall](https://getwaia.com/onboarding/) lives in `public/onboarding/`.
 - [Three-tab web app](https://getwaia.com/app/) lives in `public/app/`. The tabs are Design, Products, and Profile.

@@ -1,4 +1,4 @@
-# Waia Studio hackathon team plan
+# Dream Room hackathon team plan
 
 The product helps people find the pieces their room is missing, see what those pieces look like in place, and shop options that fit their space and budget. The target market is the United States. Use US English, dollars, inches, and Amazon.com.
 
