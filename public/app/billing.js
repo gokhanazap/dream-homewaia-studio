@@ -35,8 +35,13 @@ export async function isPro() {
   }
 }
 
+export async function annualPlanPrice() {
+  const { annual } = await packages();
+  return usd(annual);
+}
+
 async function packages() {
-  const offering = (await (await client()).getOfferings()).current;
+  const offering = (await (await client()).getOfferings({ currency: 'USD' })).current;
   if (!offering?.weekly || !offering?.annual || !offering?.lifetime) throw new Error('Plans are not available.');
   // The one-time credit pack sits in the offering's lifetime slot.
   return { weekly: offering.weekly, annual: offering.annual, pack: offering.lifetime };

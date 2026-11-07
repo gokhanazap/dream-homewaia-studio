@@ -1,3 +1,5 @@
+import { mountPaywall, paywallMarkup } from './paywall.js';
+
 const flow = document.querySelector('#flow');
 
 const steps = [
@@ -8,7 +10,7 @@ const steps = [
   { id: 'challenge', label: 'Priorities', title: 'What would <em>help most?</em>', desc: 'Select all that apply.', multiple: true, choices: [['$', 'Options within my budget', 'Bütçeme uygun seçenekler'], ['◷', 'Ideas for bare walls', 'Boş duvarlar için fikir'], ['☼', 'Better lighting', 'Daha iyi aydınlatma'], ['◫', 'See pieces in my room first', 'Eşyaları odamda önceden görmek'], ['✦', 'Pieces that work together', 'Birbiriyle uyumlu parçalar']] },
   { id: 'style', label: 'Style', title: 'What’s <em>your style?</em>', desc: 'Choose a style for your first design.', layout: 'styles', choices: [['01', 'Minimalist'], ['02', 'Modern'], ['03', 'Bohemian', 'Bohem'], ['04', 'Traditional', 'Klasik']] },
   { id: 'before-after', label: 'Shoppable preview', title: 'See it in the room. <em>Shop the same piece.</em>', desc: 'Slide to see a real Amazon wall clock on the blank wall. The product below is the one shown in the preview.' },
-  { id: 'paywall', label: 'Waia Plus', title: 'More ideas <em>for your space.</em>', desc: 'Explore more design ideas for every corner with Waia Plus.' },
+  { id: 'paywall', label: 'Waia Plus', title: 'Make every room yours.' },
 ];
 
 const storageKey = 'waia-room-answers-v1';
@@ -29,11 +31,6 @@ function readAnswers() {
 }
 
 let answers = readAnswers();
-const plans = {
-  weekly: { label: 'Weekly', access: '1 week of access', price: '$9.99', period: 'week' },
-  annual: { label: 'Yearly', access: '12 months of access', price: '$39.99', period: 'year' },
-};
-let plan = 'annual';
 let index = 0;
 
 function updateAnswer(step, value, selected) {
@@ -92,23 +89,15 @@ function preview() {
   </div>`;
 }
 
-function paywall() {
-  const cards = Object.entries(plans).map(([id, option]) => `
-    <label class="plan"><input type="radio" name="plan" value="${id}" ${plan === id ? 'checked' : ''}><span class="plan-radio"></span><span><strong>${option.label}</strong><small>${option.access}</small></span><span class="plan-price">${option.price}<small>/ ${option.period}</small></span></label>`).join('');
-  return `<div class="paywall-image"><img src="./assets/bedroom.webp" alt="Bedroom with linen bedding and warm wood finishes" width="1024" height="640"><span class="image-tag">WAIA PLUS</span></div>
-  <ul class="benefits"><li><span>✦</span> More designs</li><li><span>◫</span> More styles</li><li><span>◈</span> Product picks</li></ul>
-  <fieldset class="plans"><legend class="sr-only">Subscription plan</legend>${cards}</fieldset><p class="demo-note">Demo pricing · No charge</p>`;
-}
-
 function preferences() {
   return steps.flatMap(step => (answers[step.id] || []).map(value => ({ label: step.label, value })));
 }
 
-function openApp(chosenPlan) {
+function openApp(checkoutPlan) {
   try {
     sessionStorage.setItem('waia-room-demo-context', JSON.stringify({
-      plan: chosenPlan,
       preferences: preferences(),
+      checkoutPlan,
     }));
   } catch {}
   window.location.assign('../app/');
@@ -129,13 +118,13 @@ function content(step) {
       <input type="range" min="0" max="100" value="50" aria-label="Compare the entryway before and after renovation">
     </div>`;
     case 'before-after': return preview();
-    case 'paywall': return paywall();
+    case 'paywall': return paywallMarkup();
     default: return '';
   }
 }
 
 function actions(step) {
-  if (step.id === 'paywall') return '<div class="actions"><button class="primary" data-action="select-plan">Continue</button><button class="quiet footer-skip" data-action="open-app">Continue to free demo</button></div>';
+  if (step.id === 'paywall') return '<div class="actions"><button class="quiet footer-skip" data-action="open-app">Continue to free demo</button></div>';
   const disabled = step.choices && !answers[step.id]?.length ? 'disabled' : '';
   const note = step.choices ? '<p class="action-note">✧ &nbsp; You can change your choices anytime.</p>' : '';
   return `<div class="actions"><button class="primary" data-action="next" ${disabled}>Continue</button>
@@ -177,14 +166,13 @@ function render() {
       ${content(step)}
     </div>${actions(step)}`;
   if (step.id === 'welcome') animateMakeover();
+  if (step.id === 'paywall') mountPaywall(flow.querySelector('.plus-paywall'), () => openApp('annual'));
 }
 
 flow.addEventListener('change', event => {
   const step = steps[index];
   const input = event.target;
-  if (input.name === 'plan') {
-    plan = input.value;
-  } else if (step.choices && input.name === step.id) {
+  if (step.choices && input.name === step.id) {
     updateAnswer(step, input.value, input.checked);
     flow.querySelector('.primary').disabled = !answers[step.id].length;
   }
@@ -205,8 +193,7 @@ flow.addEventListener('click', event => {
       saveAnswers();
       go(index + 1);
       break;
-    case 'select-plan': openApp(plan); break;
-    case 'open-app': openApp(null); break;
+    case 'open-app': openApp(); break;
   }
 });
 

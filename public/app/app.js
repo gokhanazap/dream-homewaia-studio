@@ -496,6 +496,12 @@ isPro().then(pro => {
   state.pro = pro;
   refill();
   render();
-  // A plan chosen during setup opens checkout here, with the same RevenueCat prices.
+  // The onboarding CTA starts checkout once, even if the app is reloaded.
+  if (context.checkoutPlan === 'annual') {
+    delete context.checkoutPlan;
+    try { sessionStorage.setItem('waia-room-demo-context', JSON.stringify(context)); } catch {}
+    if (!pro) purchase('annual');
+    return;
+  }
   if (!pro && (context.plan === 'weekly' || context.plan === 'annual')) openPaywall(context.plan);
 });
