@@ -1,3 +1,5 @@
+import { handlePlace } from './api/place.mjs';
+
 export default {
   fetch(request, env) {
     const url = new URL(request.url);
@@ -6,6 +8,7 @@ export default {
       url.searchParams.delete('demo');
       return Response.redirect(url, 302);
     }
+    if (url.pathname === '/app/api/place') return handlePlace(request, env);
     if (url.pathname === '/onboarding' || url.pathname === '/app') {
       url.pathname += '/';
       return Response.redirect(url, 302);

@@ -1,0 +1,45 @@
+{
+  "_note": "Fill size, price and imageUrl by hand from each Amazon product page (imageUrl: right-click the product photo > Copy image address, m.media-amazon.com/...). null fields show as 'check on the product page'; without imageUrl fal draws the product from its description only.",
+  "currency": "$",
+  "defaultBudget": 150,
+  "products": {
+    "B0CMX5HD16": {
+      "type": "clock",
+      "brand": "Jomparis",
+      "name": "silent analog wall clock",
+      "label": "Silent analog wall clock",
+      "diameterCm": null,
+      "price": null,
+      "imageUrl": null
+    },
+    "B01HONVHZ2": {
+      "type": "clock",
+      "brand": "Bernhard Products",
+      "name": "classic analog wall clock",
+      "label": "Classic analog wall clock",
+      "diameterCm": null,
+      "price": null,
+      "imageUrl": null
+    },
+    "B0797FYNGF": {
+      "type": "lamp",
+      "brand": "Brightech",
+      "name": "floor reading lamp",
+      "label": "Reading floor lamp",
+      "heightCm": null,
+      "baseCm": null,
+      "price": null,
+      "imageUrl": null
+    },
+    "B078YR2WYQ": {
+      "type": "lamp",
+      "brand": "LEPOWER",
+      "name": "floor lamp with fabric drum shade",
+      "label": "Floor lamp with a fabric shade",
+      "heightCm": null,
+      "baseCm": null,
+      "price": null,
+      "imageUrl": null
+    }
+  }
+}
