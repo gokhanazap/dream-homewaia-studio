@@ -2,7 +2,7 @@ import { createInterface } from 'node:readline';
 import { writeFile } from 'node:fs/promises';
 
 const input = createInterface({ input: process.stdin, terminal: false });
-process.stdout.write('Fal anahtarı bekleniyor.\n');
+process.stdout.write('Waiting for the fal API key.\n');
 const line = await new Promise(resolve => input.once('line', resolve));
 input.close();
 const key = line.trim();
@@ -30,7 +30,7 @@ async function generate(name, model, payload) {
 
 const model = 'fal-ai/flux/schnell';
 const before = generate('room-before', model, {
-  prompt: 'Photorealistic editorial interior photograph of a modest contemporary Istanbul apartment living room, straight on, warm ivory plaster wall entirely empty, oatmeal linen sofa centered against blank wall, low oak coffee table on a simple neutral rug, daylight from left tall side window, warm muted terracotta and sage hints in cushions, empty floor corners, tasteful honest lived-in interior, premium magazine grain, no floor lamp, no wall clock, no art, no text, no letters, no logos.',
+  prompt: 'Photorealistic editorial interior photograph of a modest contemporary American apartment living room, straight on, warm ivory plaster wall entirely empty, oatmeal linen sofa centered against blank wall, low oak coffee table on a simple neutral rug, daylight from left tall side window, warm muted terracotta and sage hints in cushions, empty floor corners, tasteful honest lived-in interior, premium magazine grain, no floor lamp, no wall clock, no art, no text, no letters, no logos.',
   image_size: { width: 1024, height: 768 }, num_inference_steps: 4,
 }).then(image_url => generate('room-after', 'fal-ai/flux-pro/kontext', {
   image_url, aspect_ratio: '4:3',
@@ -43,7 +43,7 @@ const results = await Promise.allSettled([
     image_size: { width: 1024, height: 640 }, num_inference_steps: 4,
   }),
   generate('styles', model, {
-    prompt: 'Strict 2 by 2 contact sheet, four separate photorealistic living room interior photographs, each quadrant fills exactly one quarter of image without any gutters, margins, text or borders. Top left Scandinavian clean cream oak minimalist living room. Top right high-end modern contemporary charcoal and tan leather living room. Bottom left bohemian warm terracotta living room with rugs and tropical plants. Bottom right classic traditional living room with wall moulding and traditional furniture. Interior design editorial photography, no typography.',
+    prompt: 'Strict 2 by 2 contact sheet, four separate photorealistic living room interior photographs, each quadrant fills exactly one quarter of image without any gutters, margins, text or borders. Top left Scandinavian clean cream oak minimalist living room. Top right high-end modern contemporary charcoal and tan leather living room. Bottom left bohemian warm terracotta living room with rugs and tropical plants. Bottom right classic traditional living room with wall molding and traditional furniture. Interior design editorial photography, no typography.',
     image_size: 'square_hd', num_inference_steps: 4,
   }),
 ]);

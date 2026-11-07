@@ -1,91 +1,47 @@
-# Waia — Pitch deck (pitch.com için, 7 slayt, 2 dk)
+# Waia Studio pitch outline
 
-Her slaytta **ekrandaki metin** az, **konuşma notu** ayrı. pitch.com'da koyu bir şablon seç, görselleri `public/assets/` içinden al. Toplam süre: ~2:00. Demo canlı; yedek olarak ekran kaydını slayt 4'e göm.
+Use the room images in `public/assets/` for the deck and add a QR code that opens [the demo](https://getwaia.com/app/). Keep the on-screen text brief and the speaking notes separate.
 
----
+## 1. Cover
 
-## 1 · Kapak (5 sn)
-**Ekran:**
-- Waia
-- *Odanın eksik parçasını bul. Duvarına sığan, bütçene uyan.*
-- Sağ alt: canlı uygulamanın **QR kodu** + kısa URL
-- Görsel: `room-after.webp` tam ekran, koyu overlay
+**On screen.** Waia Studio. Find the pieces that complete your room.
 
-**Not:** "Merhaba, biz Waia."
+**Visual.** Use `room-after.webp` and place the demo QR code where it can be scanned.
 
----
+## 2. Problem
 
-## 2 · Problem (15 sn)
-**Ekran:**
-- Boş bir duvar. Karanlık bir köşe.
-- **Ne alacağını bilmiyorsun. Hangi boyda alacağını hiç bilmiyorsun.**
-- Küçük: Yeni taşınanlar, kiracılar, odasını yenilemek isteyen herkes
+**On screen.** A blank wall. A dark corner. Too many options.
 
-**Not:** "Herkesin evinde 'bir şey eksik' dediği bir köşe var. Saat mi, lamba mı, ne boyda? Pinterest'te saatler geçiyor, sonunda yanlış boyda ürün alıp iade ediyorsun."
-> İade/yanlış ölçü istatistiği kullanacaksanız kaynağını doğrulayın, yoksa sayı koymayın.
+**Speaker notes.** You can see that something is missing without knowing what to buy, what size will work, or what it will look like next to the furniture you already own.
 
----
+## 3. Product
 
-## 3 · Çözüm — 3 adım (15 sn)
-**Ekran:** 3 sütun
-1. **Fotoğraf çek** — mevcut odan korunur
-2. **Eksikleri gör** — her öneri için neden + doğru ölçü
-3. **Tek dokunuşla al** — farklı bütçelerde alternatifler
+**On screen.** Start with a room photo. See useful additions in place. Shop similar items.
 
-Alt şerit (küçük logolar): *Powered by fal · RevenueCat · Cloudflare*
+**Speaker notes.** The product starts with the space you already have. It can suggest a clock for a bare wall or a floor lamp next to the sofa, then show why each piece helps and where to shop.
 
-**Not:** "Waia odanı yeniden tasarlamıyor, sadece eksiğini tamamlıyor. Ve sana 'bu duvara 45 cm'lik saat sığar' diyor."
+## 4. Demo
 
----
+1. Open the sample living room and show the original photo.
+2. Select **Show the makeover**.
+3. Tap the clock, then open the floor lamp in **Products**.
+4. Show the two Amazon.com alternatives for each item.
 
-## 4 · CANLI DEMO (60 sn)
-**Ekran:** Sadece "Demo" yazısı + telefon mockup'ı (veya gömülü yedek video)
+Use the prepared example for the public demo. Add photo capture, fit guidance, or a budget total to the presentation once those features work in the demo.
 
-**Demo akışı (provalı!):**
-1. Fotoğraf yükle → fal sonucu gelir (beklerken konuş)
-2. Saat işaretine dokun → "Boş duvar için okunaklı bir saat" → **"✓ Duvarına uygun: 40–50 cm"**
-3. 2 alternatif, farklı fiyat → "Amazon'da görüntüle"
-4. Bütçe çubuğu: "Toplam ₺X / bütçen ₺Y"
-5. İkinci oda iste → **paywall** açılır
+## 5. What makes the product useful
 
-**Not:** fal 20 sn'den uzun sürerse hazır sonuca geç, durma.
+| Feature | What the customer sees |
+| --- | --- |
+| Existing room in context | Before and after images of the same room |
+| A reason for each item | A clear explanation of where it helps |
+| Shopping options | Several products for each addition |
+| Planned fit and budget guidance | Dimensions in inches and costs in dollars |
 
----
+## 6. Business model
 
-## 5 · Farkımız (10 sn)
-**Ekran:** Küçük tablo — sadece kendi güçlü yanlarımız
+The prototype shows Weekly at **$9.99** and Yearly at **$39.99**. A free demo lets visitors see the room and explore product links. Subscription billing and affiliate revenue are planned.
 
-| | Waia |
-|---|---|
-| Mevcut odanı korur | ✓ |
-| Her öneri için neden | ✓ |
-| Duvarına sığacak ölçü | ✓ |
-| Bütçeye göre alternatif | ✓ |
+## 7. What comes next
 
-**Not:** "ShopTheRoom, Roomify gibi uygulamalar odayı baştan tasarlıyor. Biz eksiği buluyoruz ve sığacağını söylüyoruz."
-> Rakip sütununa ✗ koymayın — doğrulamadık. Sadece kendi sütununuzu gösterin.
-
----
-
-## 6 · Gelir modeli (20 sn) — tie-break kriteri, en net slayt bu olsun
-**Ekran:** 3 kart + alt şerit
-
-| Ücretsiz | Oda Paketi | Waia Plus |
-|---|---|---|
-| 1 oda | Tek seferlik | ₺149,99/ay · ₺999,99/yıl |
-| Öneriler + benzer ürünler | 1 oda, tüm stiller | Sınırsız oda + fiyat düşüş uyarısı |
-
-Alt şerit: **+ Affiliate geliri** — ücretsiz kullanıcı da gelir getirir. *Paywall: RevenueCat*
-
-**Not:** "İnsanlar odasını her ay yenilemez. Bu yüzden tek odası olana tek seferlik paket, sürekli yenileyene abonelik. Ve her ürün tıklaması affiliate geliri; ilk dolar ücretsiz kullanıcıdan bile gelir."
-> Oda Paketi fiyatını ekip olarak belirleyin ve uygulamadaki fiyatla aynı yazın.
-
----
-
-## 7 · Neden yeniler + sırada ne var (10 sn)
-**Ekran:**
-- **Neden yeniler:** kaydettiğin ürünlerde fiyat düştüğünde haber · her oda için yeni öneri
-- **Sırada:** fotoğraftan otomatik ölçüm · tek tıkla sepete ekleme · Türkiye mağazaları
-- Kapanış: *Waia — odan, eksiksiz.* + QR tekrar
-
-**Not:** "Teşekkürler, QR'dan şimdi deneyebilirsiniz."
+The next milestone is generating a makeover from the customer's own photo. After that, add fit and budget filters and validate the Amazon cart experience. End on the demo QR code.

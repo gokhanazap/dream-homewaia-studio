@@ -1,0 +1,15 @@
+.app-site { max-width: 720px; }
+.app-site .layout { display: block; }
+.demo-switch { display: flex; gap: 4px; padding: 4px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 40px; background: var(--paper); }
+.demo-switch button { flex: 1; min-height: 38px; border: 0; border-radius: 40px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 750; }
+.demo-switch button[aria-pressed=true] { background: var(--rust); color: #fffaf6; }
+.room-actions { margin-top: 14px; }
+.app-body { padding-bottom: 20px; }
+.app-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; width: 100%; max-width: 480px; margin: auto auto 0; padding: 5px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; }
+.app-nav button { display: grid; place-items: center; align-content: center; gap: 2px; min-height: 52px; padding: 4px; border: 0; border-radius: 11px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 750; }
+.app-nav button span { font-size: 21px; line-height: 1; }
+.app-nav button[aria-pressed=true] { background: var(--blush); color: var(--rust-dark); }
+#app-profile .demo-link { display: inline-flex; margin-top: 9px; }
+@media (max-width: 720px) {
+  .app-nav { position: sticky; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 2; box-shadow: 0 3px 14px #3821151a; }
+}

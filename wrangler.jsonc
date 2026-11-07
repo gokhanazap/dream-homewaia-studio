@@ -6,7 +6,9 @@
   "preview_urls": false,
   "routes": [
     { "pattern": "getwaia.com/onboarding", "zone_name": "getwaia.com" },
-    { "pattern": "getwaia.com/onboarding/*", "zone_name": "getwaia.com" }
+    { "pattern": "getwaia.com/onboarding/*", "zone_name": "getwaia.com" },
+    { "pattern": "getwaia.com/app", "zone_name": "getwaia.com" },
+    { "pattern": "getwaia.com/app/*", "zone_name": "getwaia.com" }
   ],
   "assets": {
     "binding": "ASSETS",

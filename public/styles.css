@@ -132,9 +132,6 @@ h1 em { color: var(--rust); }
 .primary span { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 18px; }
 .footer-skip { display: block; margin: 2px auto 0; }
 .demo-link { width: fit-content; padding: 10px 12px; }
-.demo-switch { display: flex; gap: 4px; padding: 4px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 40px; background: var(--paper); }
-.demo-switch button { flex: 1; min-height: 38px; border: 0; border-radius: 40px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 750; }
-.demo-switch button[aria-pressed=true] { background: var(--rust); color: #fffaf6; }
 dialog { width: min(450px, calc(100% - 26px)); max-height: calc(100% - 26px); background: var(--card); color: var(--ink); border: 1px solid var(--line); padding: 24px; border-radius: 18px; box-shadow: 0 15px 45px #23180d50; }
 dialog::backdrop { background: #251a12aa; }
 .dialog-close { position: absolute; right: 12px; top: 12px; }
