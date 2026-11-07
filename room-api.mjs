@@ -18,11 +18,13 @@ const CHAT_PROMPT = `You are Waia, a friendly interior design assistant for US c
 
 function searchPrompt(items, budget) {
   const list = items.map((item, index) => `${index + 1}. ${item.query}`).join('\n');
-  return `Search the web for products currently sold on amazon.com for each numbered need.
+  return `Search the web for real products US customers can buy today for each numbered need.
+Use any online store, such as Wayfair, IKEA, Target, Walmart, West Elm, CB2, Article, Etsy, Home Depot or Amazon.
 ${budget ? `Total budget for all items: ${budget}.` : ''}
 ${list}
-Return only JSON: [{"item":1,"products":[{"title":"...","price":"$00.00"}]}]
-Give up to 3 real products per item at different price points. Use the exact product title you found. If you do not know the price, use null. Never invent a product.`;
+Return only JSON: [{"item":1,"products":[{"title":"...","store":"...","price":"$00.00","url":"https://..."}]}]
+Give 4 products per item from different stores and at different price points, with different looks.
+url must be the direct product page you found. If you do not know the price, use null. Never invent a product or URL.`;
 }
 
 function json(body, status = 200) {
@@ -47,8 +49,28 @@ function parseJson(output, open, close) {
   return JSON.parse(text.slice(text.indexOf(open), text.lastIndexOf(close) + 1));
 }
 
-function amazonSearch(query) {
-  return 'https://www.amazon.com/s?k=' + encodeURIComponent(query);
+function shopSearch(query) {
+  return 'https://www.google.com/search?tbm=shop&q=' + encodeURIComponent(query);
+}
+
+function productPage(value) {
+  try {
+    const url = new URL(String(value));
+    return url.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+// Model links can be stale. Stores that refuse automated checks keep their link, only a clear 404 is dropped.
+async function isDeadLink(url) {
+  if (url.hostname.endsWith('amazon.com')) return false;
+  try {
+    const response = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(2500) });
+    return response.status === 404 || response.status === 410;
+  } catch {
+    return false;
+  }
 }
 
 function clip(value, max) {
@@ -94,28 +116,32 @@ Setup preferences: ${clip(body.context, 300) || 'none'}`,
   });
 }
 
-async function products(body, key) {
-  const items = Array.isArray(body.items) ? body.items.slice(0, 4).map(item => ({ ...item, query: clip(item.query, 100) })) : [];
-  const found = items.map(() => []);
+// One search per item keeps every piece covered and runs in parallel.
+async function searchItem(item, budget, key) {
   try {
-    const result = await callFal(VISION_URL, key, {
-      model: SEARCH_MODEL,
-      prompt: searchPrompt(items, clip(body.budget, 40)),
-      image_urls: [],
+    const result = await callFal(VISION_URL, key, { model: SEARCH_MODEL, prompt: searchPrompt([item], budget), image_urls: [] });
+    const entries = parseJson(result.output, '[', ']');
+    return entries.flatMap(entry => (Array.isArray(entry.products) ? entry.products : [])).slice(0, 4).flatMap(product => {
+      const title = clip(product.title, 110);
+      const page = productPage(product.url);
+      if (!title) return [];
+      return [{ title, store: clip(product.store, 30) || (page ? page.hostname.replace(/^www\./, '') : 'the web'), price: product.price ? clip(String(product.price), 14) : null, page }];
     });
-    for (const entry of parseJson(result.output, '[', ']')) {
-      const target = found[Number(entry.item) - 1];
-      if (!target || !Array.isArray(entry.products)) continue;
-      for (const product of entry.products.slice(0, 3)) {
-        const title = clip(product.title, 110);
-        // A model can return a dead product page, so the link searches Amazon for the exact title.
-        if (title) target.push({ title, price: product.price ? clip(String(product.price), 14) : null, url: amazonSearch(title) });
-      }
-    }
   } catch (error) {
     console.error('product search failed', error.message);
+    return [];
   }
-  return json({ items: items.map((item, index) => ({ ...item, searchUrl: amazonSearch(item.query), products: found[index] })) });
+}
+
+async function products(body, key) {
+  const items = Array.isArray(body.items) ? body.items.slice(0, 4).map(item => ({ ...item, query: clip(item.query, 100) })) : [];
+  const budget = clip(body.budget, 40);
+  const found = await Promise.all(items.map(item => searchItem(item, budget, key)));
+  const checked = await Promise.all(found.map(list => Promise.all(list.map(async ({ page, ...product }) => {
+    const direct = page && !(await isDeadLink(page));
+    return { ...product, direct: Boolean(direct), url: direct ? page.href : shopSearch(product.title) };
+  }))));
+  return json({ items: items.map((item, index) => ({ ...item, searchUrl: shopSearch(item.query), products: checked[index] })) });
 }
 
 async function render(body, key) {

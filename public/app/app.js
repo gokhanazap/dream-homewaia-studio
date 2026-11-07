@@ -1,5 +1,5 @@
 import { buyPlan, isPro, planPrices } from './billing.js';
-import { FREE_DESIGNS } from './config.js';
+import { CREDITS, REFILL_DAYS } from './config.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('#nav');
@@ -17,6 +17,7 @@ const BUDGETS = [
   ['$750 and up', 'A bigger makeover'],
 ];
 const STAGES = ['Analyzing your room', 'Finding real products', 'Designing your room'];
+const REFINES = ['Add more plants', 'Warmer lighting', 'Try a different rug', 'Make the wall bolder'];
 const QUESTIONS = ['How can I make my living room cozier?', 'What colors work well together?', 'How do I arrange a small space?', 'What lighting suits a bedroom?'];
 
 function escapeHtml(value) {
@@ -26,9 +27,15 @@ function escapeHtml(value) {
 function loadStore() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
-    return { designs: Array.isArray(saved?.designs) ? saved.designs : [], saved: Array.isArray(saved?.saved) ? saved.saved : [], used: Number(saved?.used) || 0 };
+    return {
+      designs: Array.isArray(saved?.designs) ? saved.designs : [],
+      saved: Array.isArray(saved?.saved) ? saved.saved : [],
+      credits: Number.isFinite(saved?.credits) ? saved.credits : CREDITS.free,
+      plan: saved?.plan || null,
+      refilledAt: Number(saved?.refilledAt) || 0,
+    };
   } catch {
-    return { designs: [], saved: [], used: 0 };
+    return { designs: [], saved: [], credits: CREDITS.free, plan: null, refilledAt: 0 };
   }
 }
 
@@ -53,7 +60,7 @@ const context = readContext();
 const preferences = Array.isArray(context.preferences) ? context.preferences.filter(item => typeof item?.label === 'string' && typeof item?.value === 'string') : [];
 const store = loadStore();
 const emptyDraft = () => ({ photo: null, room: '', style: '', changes: [], note: '', budget: '' });
-const state = { route: 'home', step: 0, draft: emptyDraft(), stage: 0, result: null, error: '', pro: false, resume: false, layout: 'grid', chat: [], chatBusy: false };
+const state = { route: 'home', step: 0, draft: emptyDraft(), stage: 0, result: null, error: '', pro: false, pendingRun: null, layout: 'grid', chat: [], chatBusy: false };
 
 function go(route) {
   state.route = route;
@@ -99,9 +106,13 @@ function compare(before, after) {
   </div>`;
 }
 
+function creditLabel() {
+  return `${store.credits} credit${store.credits === 1 ? '' : 's'}`;
+}
+
 function homeView() {
   return `<header class="topbar">
-      <button class="pill${state.pro ? ' quiet' : ''}" data-act="${state.pro ? 'settings' : 'upgrade'}">${state.pro ? 'Plus' : 'Go Plus'}</button>
+      <button class="pill" data-act="upgrade">${creditLabel()}</button>
       <span class="topbar-title">Waia</span>
       <button class="icon-button" data-go="settings" aria-label="Settings">⚙</button>
     </header>
@@ -117,11 +128,10 @@ function homeView() {
 
 function stepHeader() {
   const bars = STEPS.map((_, index) => `<span class="${index <= state.step ? 'on' : ''}"></span>`).join('');
-  const remaining = Math.max(FREE_DESIGNS - store.used, 0);
   return `<header class="topbar">
     <button class="icon-button" data-act="back" aria-label="Back">←</button>
     <div class="progress" aria-label="Step ${state.step + 1} of ${STEPS.length}">${bars}</div>
-    <span class="pill quiet">${state.pro ? 'Plus' : `${remaining} free`}</span>
+    <span class="pill quiet">${creditLabel()}</span>
   </header>`;
 }
 
@@ -166,17 +176,17 @@ function generatingView() {
     return `<div class="stage ${status}"><span class="stage-mark" aria-hidden="true">${index < state.stage ? '✓' : index + 1}</span>${label}</div>`;
   }).join('');
   return `<div class="preview"><img src="${state.draft.photo}" alt="Your room"></div>
-    <div class="step-title"><h1>Working on <em>your room</em></h1><p class="muted">This usually takes about 20 seconds.</p></div>
+    <div class="step-title"><h1>Working on <em>your room</em></h1><p class="muted">This usually takes about 30 seconds.</p></div>
     <div class="stages" role="status">${rows}</div>`;
 }
 
 function productCard(product, item) {
   const saved = store.saved.some(entry => entry.url === product.url);
   return `<article class="product">
-    <div><strong>${escapeHtml(product.title)}</strong><small>${product.price ? 'About ' + escapeHtml(product.price) + ' · confirm on Amazon' : 'Check the price on Amazon'}</small></div>
+    <div><strong>${escapeHtml(product.title)}</strong><small>${escapeHtml(product.store)}${product.price ? ' · about ' + escapeHtml(product.price) : ''}</small></div>
     <div class="product-actions">
-      <button class="save" data-save="${escapeHtml(product.url)}" data-title="${escapeHtml(product.title)}" data-price="${escapeHtml(product.price || '')}" data-item="${escapeHtml(item)}" aria-pressed="${saved}">${saved ? 'Saved' : 'Save'}</button>
-      <a class="link" href="${escapeHtml(product.url)}" target="_blank" rel="noopener noreferrer">Find on Amazon ↗</a>
+      <button class="save" data-save="${escapeHtml(product.url)}" data-title="${escapeHtml(product.title)}" data-price="${escapeHtml(product.price || '')}" data-store="${escapeHtml(product.store)}" data-item="${escapeHtml(item)}" aria-pressed="${saved}">${saved ? 'Saved' : 'Save'}</button>
+      <a class="link" href="${escapeHtml(product.url)}" target="_blank" rel="noopener noreferrer">${product.direct ? 'View at ' + escapeHtml(product.store) : 'Find this product'} ↗</a>
     </div>
   </article>`;
 }
@@ -186,12 +196,17 @@ function resultView() {
   const items = result.items.map(item => `<section class="item">
     <h2>${escapeHtml(item.name)}</h2><p class="muted">${escapeHtml(item.reason)}</p>
     ${item.products.map(product => productCard(product, item.name)).join('')}
-    <a class="link plain" href="${escapeHtml(item.searchUrl)}" target="_blank" rel="noopener noreferrer">${item.products.length ? 'More options on Amazon ↗' : 'Search Amazon ↗'}</a>
+    <a class="link plain" href="${escapeHtml(item.searchUrl)}" target="_blank" rel="noopener noreferrer">${item.products.length ? 'More options ↗' : 'Search stores ↗'}</a>
   </section>`).join('');
-  return `<header class="topbar"><button class="icon-button" data-go="designs" aria-label="Back to designs">←</button><span class="topbar-title">Your design</span><span></span></header>
+  return `<header class="topbar"><button class="icon-button" data-go="designs" aria-label="Back to designs">←</button><span class="topbar-title">Your design</span><span class="pill quiet">${creditLabel()}</span></header>
     ${compare(result.before, result.imageUrl)}
     <p>${escapeHtml(result.summary)}</p>
-    <div class="step-title"><h2>Similar products</h2><p class="muted">Real products that match this look. The image is a preview, so the exact item can differ.</p></div>
+    ${state.error ? `<p class="error" role="alert">${escapeHtml(state.error)}</p>` : ''}
+    <section class="card"><h2>Change this room</h2><p class="muted">Each new image uses 1 credit.</p>
+      <div class="chips">${REFINES.map(text => `<button class="chip" data-refine="${escapeHtml(text)}">${escapeHtml(text)}</button>`).join('')}</div>
+      <form class="composer" data-refine-form><label class="sr-only" for="refine-input">Describe a change</label><input id="refine-input" autocomplete="off" maxlength="300" placeholder="Describe a change"><button aria-label="Create new version">↑</button></form>
+    </section>
+    <div class="step-title"><h2>Shop this room</h2><p class="muted">Similar products from online stores. The image is a preview, so the exact item can differ.</p></div>
     ${items}
     <button class="primary" data-act="start">Design another room <span aria-hidden="true">→</span></button>`;
 }
@@ -221,9 +236,9 @@ function chatView() {
 
 function settingsView() {
   const prefs = preferences.map(item => `<li><span>${escapeHtml(item.label)}</span><strong>${escapeHtml(item.value)}</strong></li>`).join('');
-  const saved = store.saved.map(item => `<li><span>${escapeHtml(item.item)}</span><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)} ↗</a></li>`).join('');
+  const saved = store.saved.map(item => `<li><span>${escapeHtml(item.item)}</span><a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}${item.store ? ' · ' + escapeHtml(item.store) : ''} ↗</a></li>`).join('');
   return `<header class="topbar"><button class="icon-button" data-go="home" aria-label="Back">←</button><span class="topbar-title">Settings</span><span></span></header>
-    <section class="card"><h2>${state.pro ? 'Waia Plus' : 'Free plan'}</h2><p class="muted">${state.pro ? 'Unlimited room designs.' : `${Math.max(FREE_DESIGNS - store.used, 0)} free design left.`}</p>${state.pro ? '' : '<button class="primary" data-act="upgrade">Upgrade to Waia Plus</button>'}</section>
+    <section class="card"><h2>${state.pro ? 'Waia Plus' : 'Free plan'}</h2><p class="muted">${creditLabel()} left. Each new room image uses 1 credit.</p><button class="primary" data-act="upgrade">${state.pro ? 'Buy more credits' : 'Get more credits'}</button></section>
     <section class="item"><h2>Saved products</h2>${saved ? `<ul class="list">${saved}</ul>` : '<p class="muted">Save products from a design to compare them later.</p>'}</section>
     ${prefs ? `<section class="item"><h2>Your preferences</h2><ul class="list">${prefs}</ul></section>` : ''}
     <a class="link plain" href="../onboarding/">Back to setup</a>`;
@@ -249,49 +264,64 @@ function startDesign() {
   go('create');
 }
 
-async function canDesign() {
-  if (store.used < FREE_DESIGNS || state.pro) return true;
-  state.pro = await isPro();
-  return state.pro;
+
+function refill() {
+  const days = REFILL_DAYS[store.plan];
+  if (!state.pro || !days || Date.now() - store.refilledAt < days * 86_400_000) return;
+  store.credits += CREDITS[store.plan];
+  store.refilledAt = Date.now();
+  saveStore();
 }
 
-async function generate() {
-  if (!(await canDesign())) {
-    state.resume = true;
+async function runDesign({ image, answers, previous = null }) {
+  if (store.credits < 1) {
+    state.pendingRun = { image, answers, previous };
     openPaywall();
     return;
   }
-  const { draft } = state;
   state.error = '';
   state.stage = 0;
+  state.draft.photo = image;
   go('generating');
   try {
-    const plan = await post('plan', {
-      image: draft.photo,
-      context: preferences.map(item => `${item.label}: ${item.value}`).join('; '),
-      answers: { room: draft.room, style: draft.style, changes: draft.changes, note: draft.note, budget: draft.budget },
-    });
+    const plan = await post('plan', { image, context: preferences.map(item => `${item.label}: ${item.value}`).join('; '), answers });
     state.stage = 1;
     render();
-    const { items } = await post('products', { items: plan.items, budget: draft.budget });
+    const { items } = await post('products', { items: plan.items, budget: answers.budget });
     state.stage = 2;
     render();
     const picks = items.map(item => item.products[0]?.title || item.name);
-    const { imageUrl } = await post('render', { image: draft.photo, editPrompt: plan.editPrompt, products: picks });
-    const before = await resizeImage(draft.photo, 480, 0.7);
-    state.result = { imageUrl, before, summary: plan.summary, items, title: `${draft.style} ${draft.room}`.toLowerCase() };
-    state.result.title = state.result.title.charAt(0).toUpperCase() + state.result.title.slice(1);
-    store.used += 1;
-    store.designs.unshift(state.result);
-    store.designs = store.designs.slice(0, 8);
+    const { imageUrl } = await post('render', { image, editPrompt: plan.editPrompt, products: picks });
+    store.credits -= 1;
+    const before = previous ? previous.before : await resizeImage(image, 480, 0.7);
+    const title = previous ? previous.title : `${answers.style} ${answers.room}`.toLowerCase().replace(/^./, char => char.toUpperCase());
+    const design = { id: previous?.id || Date.now(), imageUrl, before, summary: plan.summary, items, title, answers };
+    store.designs = [design, ...store.designs.filter(entry => entry.id !== design.id)].slice(0, 8);
     saveStore();
-    state.result = { ...state.result, before: draft.photo };
+    state.result = previous ? design : { ...design, before: image };
     go('result');
   } catch (error) {
     state.error = error.message;
-    state.step = STEPS.length - 1;
-    go('create');
+    if (previous) {
+      state.result = previous;
+      go('result');
+    } else {
+      state.step = STEPS.length - 1;
+      go('create');
+    }
   }
+}
+
+function generate() {
+  const { photo, room, style, changes, note, budget } = state.draft;
+  runDesign({ image: photo, answers: { room, style, changes, note, budget } });
+}
+
+function refine(text) {
+  const value = text.trim();
+  if (!value || !state.result) return;
+  const { answers = {}, imageUrl } = state.result;
+  runDesign({ image: imageUrl, answers: { ...answers, changes: [], note: value }, previous: state.result });
 }
 
 async function openPaywall(selected = 'annual') {
@@ -303,29 +333,36 @@ async function openPaywall(selected = 'annual') {
     render();
     return;
   }
-  const plan = (id, label, note, period) => `<label class="plan"><input type="radio" name="plan" value="${id}" ${selected === id ? 'checked' : ''}><span><strong>${label}</strong><small>${note}</small></span><span class="plan-price">${prices[id]}<small>/ ${period}</small></span></label>`;
+  const option = (id, label, note, price, period) => `<label class="plan"><input type="radio" name="plan" value="${id}" ${selected === id ? 'checked' : ''}><span><strong>${label}</strong><small>${note}</small></span><span class="plan-price">${price}<small>${period}</small></span></label>`;
+  const plans = state.pro ? '' : option('annual', 'Yearly', `${CREDITS.annual} credits every month`, prices.annual, '/ year') + option('weekly', 'Weekly', `${CREDITS.weekly} credits every week`, prices.weekly, '/ week');
   dialog.innerHTML = `<button class="dialog-close" data-close aria-label="Close">×</button>
     <div class="dialog-body">
-      <h2 id="dialog-title">Keep designing your home</h2>
-      <p class="muted">Your first design is free. Waia Plus gives you unlimited rooms.</p>
-      ${plan('annual', 'Yearly', 'Renews every year', 'year')}
-      ${plan('weekly', 'Weekly', 'Renews every week', 'week')}
+      <h2 id="dialog-title">${store.credits < 1 ? 'You are out of credits' : 'Get more credits'}</h2>
+      <p class="muted">Each new room image uses 1 credit.</p>
+      ${plans}
+      ${option('pack', 'Credit pack', `${CREDITS.pack} extra credits, no renewal`, prices.pack, 'one time')}
       <button class="primary" data-buy>Continue <span aria-hidden="true">→</span></button>
-      <p class="fineprint">Test mode. No real money is charged. Cancel anytime.</p>
+      <p class="fineprint">Test mode. No real money is charged. Subscriptions renew until canceled.</p>
     </div>`;
+  if (state.pro) dialog.querySelector('[value="pack"]').checked = true;
   if (!dialog.open) dialog.showModal();
 }
 
 async function purchase(plan) {
   dialog.close();
   try {
-    if (await buyPlan(plan)) {
+    if (!(await buyPlan(plan))) return;
+    store.credits += CREDITS[plan];
+    if (plan !== 'pack') {
+      store.plan = plan;
+      store.refilledAt = Date.now();
       state.pro = true;
-      const resume = state.resume;
-      state.resume = false;
-      render();
-      if (resume) generate();
     }
+    saveStore();
+    const pending = state.pendingRun;
+    state.pendingRun = null;
+    render();
+    if (pending) runDesign(pending);
   } catch {
     state.error = 'The payment could not be completed. Please try again.';
     render();
@@ -335,7 +372,7 @@ async function purchase(plan) {
 function toggleSaved(button) {
   const index = store.saved.findIndex(entry => entry.url === button.dataset.save);
   if (index >= 0) store.saved.splice(index, 1);
-  else store.saved.unshift({ url: button.dataset.save, title: button.dataset.title, price: button.dataset.price, item: button.dataset.item });
+  else store.saved.unshift({ url: button.dataset.save, title: button.dataset.title, price: button.dataset.price, store: button.dataset.store, item: button.dataset.item });
   saveStore();
   render();
 }
@@ -413,8 +450,9 @@ document.addEventListener('click', event => {
   if (button.dataset.save) toggleSaved(button);
   if (button.dataset.ask) ask(button.dataset.ask);
   if (button.dataset.buy !== undefined) purchase(dialog.querySelector('[name="plan"]:checked').value);
+  if (button.dataset.refine) refine(button.dataset.refine);
   if (button.dataset.close !== undefined) {
-    state.resume = false;
+    state.pendingRun = null;
     dialog.close();
   }
   if (button.dataset.layout) {
@@ -447,14 +485,16 @@ view.addEventListener('change', async event => {
 });
 
 view.addEventListener('submit', event => {
-  if (event.target.dataset.chat === undefined) return;
   event.preventDefault();
-  ask(event.target.querySelector('input').value);
+  const { value } = event.target.querySelector('input');
+  if (event.target.dataset.chat !== undefined) ask(value);
+  if (event.target.dataset.refineForm !== undefined) refine(value);
 });
 
 render();
 isPro().then(pro => {
   state.pro = pro;
+  refill();
   render();
   // A plan chosen during setup opens checkout here, with the same RevenueCat prices.
   if (!pro && (context.plan === 'weekly' || context.plan === 'annual')) openPaywall(context.plan);

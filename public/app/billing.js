@@ -37,17 +37,18 @@ export async function isPro() {
 
 async function packages() {
   const offering = (await (await client()).getOfferings()).current;
-  if (!offering?.weekly || !offering?.annual) throw new Error('Plans are not available.');
-  return { weekly: offering.weekly, annual: offering.annual };
+  if (!offering?.weekly || !offering?.annual || !offering?.lifetime) throw new Error('Plans are not available.');
+  // The one-time credit pack sits in the offering's lifetime slot.
+  return { weekly: offering.weekly, annual: offering.annual, pack: offering.lifetime };
 }
 
 // Prices shown on the paywall come from RevenueCat so they always match checkout.
 export async function planPrices() {
-  const { weekly, annual } = await packages();
-  return { weekly: usd(weekly), annual: usd(annual) };
+  const { weekly, annual, pack } = await packages();
+  return { weekly: usd(weekly), annual: usd(annual), pack: usd(pack) };
 }
 
-// Returns true when the purchase unlocks Waia Plus, false when the customer cancels.
+// Returns true when the purchase completes, false when the customer cancels.
 export async function buyPlan(plan) {
   const { ErrorCode, PurchasesError } = await loadSdk();
   const purchases = await client();
@@ -58,5 +59,5 @@ export async function buyPlan(plan) {
     if (error instanceof PurchasesError && error.errorCode === ErrorCode.UserCancelledError) return false;
     throw error;
   }
-  return purchases.isEntitledTo(ENTITLEMENT);
+  return true;
 }
