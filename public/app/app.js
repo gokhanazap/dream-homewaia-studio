@@ -136,11 +136,11 @@ function homeView() {
     <section class="hero"><h1>Complete the room <em>you already have.</em></h1></section>
     <button class="tool" data-act="start"><span class="tool-icon" aria-hidden="true">⌂</span><span><strong>Room Designer</strong><small>Your room, your budget, real products.</small></span><span class="tool-arrow" aria-hidden="true">→</span></button>
     <article class="feature">
-      <img src="./assets/room-after.webp" alt="Living room finished with a wall clock and floor lamp">
+      <img src="./assets/home-after.webp" alt="Bright renovated living room with a cream sofa and oak floor">
       <span class="tag">Start here</span>
       <div class="feature-body"><h2>See it in your room</h2><button class="primary" data-act="start">Try now <span aria-hidden="true">→</span></button></div>
     </article>
-    <section class="item"><h2>Small changes, real difference</h2>${compare('./assets/room-before.webp', './assets/room-after.webp')}</section>`;
+    <section class="item"><h2>From tired to beautiful</h2>${compare('./assets/home-before.webp', './assets/home-after.webp')}</section>`;
 }
 
 function section(number, title, tag, body) {
@@ -460,7 +460,7 @@ const actions = {
   tips: showTips,
   generate,
   async sample() {
-    const blob = await (await fetch('./assets/room-before.webp')).blob();
+    const blob = await (await fetch('./assets/home-before.webp')).blob();
     state.draft.photo = await resizeImage(blob, MAX_SIDE, 0.82);
     render();
   },
