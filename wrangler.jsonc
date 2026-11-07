@@ -1,0 +1,17 @@
+{
+  "name": "waia-room-onboarding",
+  "main": "./worker.mjs",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "getwaia.com/onboarding", "zone_name": "getwaia.com" },
+    { "pattern": "getwaia.com/onboarding/*", "zone_name": "getwaia.com" }
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./public",
+    "run_worker_first": true,
+    "html_handling": "none"
+  }
+}
