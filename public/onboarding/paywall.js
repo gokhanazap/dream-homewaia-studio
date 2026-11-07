@@ -24,7 +24,7 @@ export function paywallMarkup() {
     </div>
     <h3>What’s included</h3>
     <ul class="plus-benefits">
-      <li>${CREDITS.annual} home transformations every month</li>
+      <li>${CREDITS.annual} home transformations right away</li>
       <li>Access to all design features</li>
       <li>Explore different styles in your own room</li>
       <li>Shop product picks and save your favorite designs</li>
