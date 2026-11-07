@@ -360,7 +360,7 @@ async function openPaywall(selected = 'annual') {
     return;
   }
   const option = (id, label, note, price, period) => `<label class="plan"><input type="radio" name="plan" value="${id}" ${selected === id ? 'checked' : ''}><span><strong>${label}</strong><small>${note}</small></span><span class="plan-price">${price}<small>${period}</small></span></label>`;
-  const plans = state.pro ? '' : option('annual', 'Yearly', `${CREDITS.annual} credits every month`, prices.annual, '/ year') + option('weekly', 'Weekly', `${CREDITS.weekly} credits every week`, prices.weekly, '/ week');
+  const plans = state.pro ? '' : option('annual', 'Yearly', `${CREDITS.annual} credits a month, ${CREDITS.annual * 12} a year`, prices.annual, '/ year') + option('weekly', 'Weekly', `${CREDITS.weekly} credits every week`, prices.weekly, '/ week');
   dialog.innerHTML = `<button class="dialog-close" data-close aria-label="Close">×</button>
     <div class="dialog-body">
       <h2 id="dialog-title">${store.credits < 1 ? 'You are out of credits' : 'Get more credits'}</h2>
