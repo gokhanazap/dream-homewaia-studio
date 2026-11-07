@@ -1,36 +1,34 @@
-.compare .preview-clock {
-  position: absolute;
-  top: 28%;
-  left: 66%;
-  width: 10%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  box-shadow: 1px 2px 4px #241b1140;
-  transform: translate(-50%, -50%);
-}
+.makeover.product-makeover { min-height: 0; aspect-ratio: 4 / 3; }
+.preview-products { display: grid; gap: 7px; margin: 10px 0 0; padding: 0; list-style: none; }
 
 .preview-product {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
-  padding: 10px;
+  padding: 6px 10px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--paper);
 }
 
-.preview-product img { border-radius: 50%; }
-.preview-product .eyebrow { font-size: 9px; }
+.preview-thumbnail { position: relative; }
+.preview-thumbnail img { aspect-ratio: 1; object-fit: contain; border-radius: 8px; }
+.preview-thumbnail span, .makeover-marker {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--sunburst);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+.preview-thumbnail span { position: absolute; right: -2px; bottom: -2px; width: 17px; height: 17px; font-size: 10px; }
 .preview-product strong { display: block; font-size: 13px; }
 .preview-product small { display: block; color: var(--muted); font-size: 11px; }
-.preview-product a { color: var(--rust-dark); font-size: 12px; font-weight: 750; }
-
-@media (max-width: 390px) {
-  .preview-product { grid-template-columns: 42px minmax(0, 1fr); }
-  .preview-product a { grid-column: 2; }
-}
+.preview-product a { display: grid; align-items: center; min-height: 44px; color: var(--rust-dark); font-size: 12px; font-weight: 750; white-space: nowrap; }
 
 :root {
   --paper: #fff;
@@ -86,12 +84,15 @@
   border-radius: 19px;
 }
 .makeover img { position: absolute; inset: 0; width: 100%; height: 100%; aspect-ratio: auto; }
-.makeover-prices {
+.makeover-prices, .makeover-markers {
   position: absolute;
   inset: 0;
   clip-path: inset(0 0 0 var(--split));
   pointer-events: none;
 }
+.makeover-marker { position: absolute; transform: translate(-50%, -50%); box-shadow: 0 2px 8px #0004; }
+.clock-marker { top: 25%; left: 77%; }
+.lamp-marker { top: 39%; left: 31%; }
 .makeover-price {
   position: absolute;
   transform: translate(-50%, -50%);

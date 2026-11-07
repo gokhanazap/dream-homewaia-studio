@@ -9,7 +9,7 @@ const steps = [
   { id: 'mood', label: 'Mood', title: 'How should your room <em>feel?</em>', desc: 'Choose how you want to feel when you walk in.', choices: [['☼', 'Warm and cozy', 'Sıcak ve rahat'], ['✧', 'Elegant and refined', 'Şık ve zarif'], ['◈', 'Colorful and creative', 'Renkli ve yaratıcı'], ['≈', 'Calm and airy', 'Sakin ve ferah'], ['♡', 'Relaxed and inviting', 'Samimi ve davetkâr']] },
   { id: 'challenge', label: 'Priorities', title: 'What would <em>help most?</em>', desc: 'Select all that apply.', multiple: true, choices: [['$', 'Options within my budget', 'Bütçeme uygun seçenekler'], ['◷', 'Ideas for bare walls', 'Boş duvarlar için fikir'], ['☼', 'Better lighting', 'Daha iyi aydınlatma'], ['◫', 'See pieces in my room first', 'Eşyaları odamda önceden görmek'], ['✦', 'Pieces that work together', 'Birbiriyle uyumlu parçalar']] },
   { id: 'style', label: 'Style', title: 'What’s <em>your style?</em>', desc: 'Choose a style for your first design.', layout: 'styles', choices: [['01', 'Minimalist'], ['02', 'Modern'], ['03', 'Bohemian', 'Bohem'], ['04', 'Traditional', 'Klasik']] },
-  { id: 'before-after', label: 'Shoppable preview', title: 'See it in the room. <em>Shop the same piece.</em>', desc: 'Slide to see a real Amazon wall clock on the blank wall. The product below is the one shown in the preview.' },
+  { id: 'before-after', label: 'Shoppable preview', title: 'See it in the room. <em>Shop the same piece.</em>', desc: 'Slide to reveal the makeover. Shop the clock and floor lamp used as references.' },
   { id: 'paywall', label: 'Dream Room Plus', title: 'Make every room yours.' },
 ];
 
@@ -73,20 +73,28 @@ function choices(step) {
 }
 
 function preview() {
-  const clockImage = './bernhard-wall-clock.jpg';
-  return `<div class="compare" style="--split: 48%">
-    <img src="./assets/room-before.webp" alt="Sample living room" width="1184" height="880">
-    <img class="preview-clock" src="${clockImage}" alt="Bernhard Products wall clock placed above the sofa" width="357" height="355">
-    <img class="compare-before" src="./assets/room-before.webp" alt="Living room before the makeover" width="1184" height="880">
-    <span class="image-tag compare-left">BEFORE</span><span class="image-tag compare-right">AFTER</span>
-    <span class="compare-line"><span>‹ ›</span></span>
-    <input type="range" min="0" max="100" value="48" aria-label="Compare the room with and without the wall clock">
+  const products = [
+    ['Bernhard Wall Clock', '10-inch black frame', 'bernhard-wall-clock.jpg', 'B01HONVHZ2'],
+    ['Brightech Montage Floor Lamp', 'Black stand with a fabric shade', 'brightech-floor-lamp.jpg', 'B0797FYNGF'],
+  ];
+  const cards = products.map(([name, detail, image, asin], i) => `<li class="preview-product">
+    <div class="preview-thumbnail"><img src="./${image}" alt="" width="46" height="46"><span aria-hidden="true">${i + 1}</span></div>
+    <div><strong>${name}</strong><small>${detail}</small></div>
+    <a href="https://www.amazon.com/dp/${asin}" target="_blank" rel="noopener noreferrer" aria-label="View ${name} on Amazon">Amazon ↗</a>
+  </li>`).join('');
+
+  return `<div class="compare makeover product-makeover" style="--split: 21%">
+    <img src="./shoppable-living-room.webp" alt="Restyled living room with olive walls, a vintage rug, a black wall clock, and a floor lamp" width="1200" height="896">
+    <img class="compare-before" src="./assets/room-before.webp" alt="The same living room before styling, with a bare wall and a plain rug" width="1184" height="880">
+    <div class="makeover-markers" aria-hidden="true">
+      <span class="makeover-marker clock-marker">1</span>
+      <span class="makeover-marker lamp-marker">2</span>
+    </div>
+    <span class="image-tag compare-left">Before</span><span class="image-tag compare-right">After</span>
+    <span class="compare-line" aria-hidden="true"><span>‹ ›</span></span>
+    <input type="range" min="0" max="100" value="21" aria-label="Compare the living room before and after the makeover">
   </div>
-  <div class="preview-product">
-    <img src="${clockImage}" alt="" width="48" height="48">
-    <div><span class="eyebrow">PRODUCT SHOWN</span><strong>Bernhard Products Wall Clock</strong><small>10-inch black frame · Amazon.com</small></div>
-    <a href="https://www.amazon.com/dp/B01HONVHZ2" target="_blank" rel="noopener noreferrer">View on Amazon ↗</a>
-  </div>`;
+  <ul class="preview-products" aria-label="Featured Amazon products">${cards}</ul>`;
 }
 
 function preferences() {
@@ -127,7 +135,7 @@ function actions(step) {
   if (step.id === 'paywall') return '<div class="actions"><button class="quiet footer-skip" data-action="open-app">Continue to free demo</button></div>';
   const disabled = step.choices && !answers[step.id]?.length ? 'disabled' : '';
   const note = step.choices ? '<p class="action-note">✧ &nbsp; You can change your choices anytime.</p>' : '';
-  return `<div class="actions"><button class="primary" data-action="next" ${disabled}>Continue</button>
+  return `<div class="actions"><button class="primary" data-action="next" ${disabled}>${step.id === 'before-after' ? 'See plans' : 'Continue'}</button>
     ${note}</div>`;
 }
 
