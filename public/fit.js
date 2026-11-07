@@ -225,7 +225,7 @@ async function placeSelected() {
     if (!response.ok || !result.image) throw new Error(result.error || 'Sunucu hatası (' + response.status + ')');
     const items = result.products.map(p => {
       const price = num(data.products[p.asin]?.price);
-      return `<li><span><strong>${escapeHTML(p.brand || '')}</strong><small>${escapeHTML(p.name || p.type)}${price !== null ? ' · ' + money(price) : ''}</small></span>
+      return `<li><span><strong>${escapeHTML(p.brand || '')}</strong><small>${escapeHTML(data.products[p.asin]?.label || p.name || p.type)}${price !== null ? ' · ' + money(price) : ''}</small></span>
         <a class="product-detail" href="https://www.amazon.com/dp/${p.asin}" target="_blank" rel="noopener noreferrer">Ürünü gör ↗</a></li>`;
     }).join('');
     const { total, missing } = selectedTotal();
@@ -241,7 +241,9 @@ async function placeSelected() {
       </div>
       <ul class="fit-result-list">${items}</ul>
       <div class="fit-budget"><div class="fit-budget-row"><span>Toplam</span><strong>${missing ? 'Fiyatı ürün sayfasında gör' : money(total) + ' / ' + moneyRound(budget())}</strong></div></div>
-      <p class="shopping-note">Yapay zekâ önizlemesi (fal). Ürün görünümü yaklaşık olabilir; ölçü ve fiyatı ürün sayfasında doğrula.</p>`);
+      <p class="shopping-note">${result.products.every(p => p.usedReference)
+        ? 'Ürünler kendi fotoğraflarından yerleştirildi · yapay zekâ önizlemesi (fal).'
+        : 'Benzer görünüm · yapay zekâ önizlemesi (fal).'} Ölçü ve fiyatı ürün sayfasında doğrula.</p>`);
   } catch (error) {
     showDialog(`<span class="eyebrow"><span class="dot"></span> ODANDA GÖR</span>
       <h2 id="dialog-title">Şu an oluşturulamadı.</h2>
@@ -358,6 +360,7 @@ const css = `
 @keyframes fit-slide { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
 .fit-result { position: relative; margin-top: 10px; border-radius: 12px; overflow: hidden; background: #eee6da; }
 .fit-result img { width: 100%; height: auto; }
+.fit-result img[hidden] { display: none; }
 .fit-result-switch { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; gap: 4px; padding: 3px; border-radius: 99px; background: #fffdf8e6; }
 .fit-result-switch button { border: 0; background: transparent; border-radius: 99px; padding: 4px 12px; font-size: 12px; font-weight: 700; }
 .fit-result-switch button[aria-pressed="true"] { background: var(--rust, #ad462f); color: #fff; }
