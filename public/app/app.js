@@ -1,5 +1,6 @@
 import { buyPlan, isPro, planPrices } from './billing.js';
 import { CREDITS, REFILL_DAYS } from './config.js';
+import { EXAMPLES } from './examples.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('#nav');
@@ -21,12 +22,6 @@ const STAGE_LINES = [
   ['Reading the light in your room…', 'Studying your layout…', 'Spotting what this space is missing…'],
   ['Hunting for pieces you will love…', 'Comparing real stores…', 'Matching products to your budget…'],
   ['Placing everything in your room…', 'Getting the details right…', 'Almost ready to reveal it…'],
-];
-const EXAMPLES = [
-  ['kitchen', 'Modern farmhouse', 'From a gutted kitchen'],
-  ['deco', 'Art Deco', 'From a bare mattress'],
-  ['boho', 'Bohemian', 'From an empty spare room'],
-  ['japandi', 'Japandi', 'From cracked concrete'],
 ];
 const STAGE_PROGRESS = [28, 62, 90];
 const REFINES = ['Add more plants', 'Warmer lighting', 'Try a different rug', 'Make the wall bolder'];
@@ -120,12 +115,18 @@ async function post(path, body) {
   return data;
 }
 
-function compare(before, after) {
-  return `<div class="compare" style="--split: 50%">
+function priceTags(pins) {
+  return pins.map(pin => `<a class="price-tag" style="left: ${pin.x}%; top: ${pin.y}%" href="${escapeHtml(pin.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(`${pin.name}, ${pin.price} at ${pin.store}`)}">${escapeHtml(pin.price)}</a>`).join('');
+}
+
+function compare(before, after, pins = []) {
+  const split = pins.length ? 12 : 50;
+  return `<div class="compare" style="--split: ${split}%">
     <img src="${escapeHtml(after)}" alt="Room after the redesign">
     <img class="before" src="${escapeHtml(before)}" alt="Room before the redesign">
     <span class="compare-line"></span><span class="tag left">Before</span><span class="tag right">After</span>
-    <input type="range" min="0" max="100" value="50" aria-label="Compare before and after">
+    <input type="range" min="0" max="100" value="${split}" aria-label="Compare before and after">
+    ${priceTags(pins)}
   </div>`;
 }
 
@@ -142,12 +143,12 @@ function homeView() {
     <section class="hero"><h1>Complete the room <em>you already have.</em></h1></section>
     <button class="tool" data-act="start"><span class="tool-icon" aria-hidden="true">⌂</span><span><strong>Room Designer</strong><small>Your room, your budget, real products.</small></span><span class="tool-arrow" aria-hidden="true">→</span></button>
     <article class="feature">
-      <img src="./assets/ex-kitchen-after.webp" alt="Sage green farmhouse kitchen with a marble island">
+      <img src="./assets/real-living-after.webp" alt="Living room with a patterned rug, arc floor lamp and framed art">
       <span class="tag">Start here</span>
       <div class="feature-body"><h2>See it in your room</h2><button class="primary" data-act="start">Try now <span aria-hidden="true">→</span></button></div>
     </article>
-    <section class="item"><h2>Any room. Any style.</h2><p class="muted">Slide to see what is possible.</p></section>
-    ${EXAMPLES.map(([id, style, note]) => `<section class="item example">${compare(`./assets/ex-${id}-before.webp`, `./assets/ex-${id}-after.webp`)}<div><strong>${style}</strong><small>${note}</small></div></section>`).join('')}`;
+    <section class="item"><h2>Real products. Real prices.</h2><p class="muted">Tap a price to see the product. Example rooms are generated previews.</p></section>
+    ${EXAMPLES.map(({ id, title, pins }) => `<section class="item example">${compare(`./assets/real-${id}-before.webp`, `./assets/real-${id}-after.webp`, pins)}<div><strong>${title}</strong><small>${pins.map(pin => pin.store).filter((store, index, list) => list.indexOf(store) === index).join(', ')}</small></div></section>`).join('')}`;
 }
 
 function section(number, title, tag, body) {
@@ -213,6 +214,14 @@ function productCard(product, item) {
   </article>`;
 }
 
+function resultPins({ pins = [], items }) {
+  return pins.flatMap(pin => {
+    const item = items.find(entry => entry.name === pin.name);
+    const product = item?.products.find(entry => entry.price);
+    return product ? [{ ...pin, price: product.price, url: product.url, store: product.store }] : [];
+  });
+}
+
 function resultView() {
   const { result } = state;
   const items = result.items.map(item => `<section class="item">
@@ -221,7 +230,7 @@ function resultView() {
     <a class="link plain" href="${escapeHtml(item.searchUrl)}" target="_blank" rel="noopener noreferrer">${item.products.length ? 'More options ↗' : 'Search stores ↗'}</a>
   </section>`).join('');
   return `<header class="topbar"><button class="icon-button" data-go="designs" aria-label="Back to designs">←</button><span class="topbar-title">Your design</span><span class="pill quiet">${creditLabel()}</span></header>
-    ${compare(result.before, result.imageUrl)}
+    ${compare(result.before, result.imageUrl, resultPins(result))}
     <p>${escapeHtml(result.summary)}</p>
     ${state.error ? `<p class="error" role="alert">${escapeHtml(state.error)}</p>` : ''}
     <section class="card"><h2>Change this room</h2><p class="muted">Each new image uses 1 credit.</p>
@@ -333,11 +342,11 @@ async function runDesign({ image, answers, previous = null }) {
     const { items } = await post('products', { items: plan.items, budget: answers.budget });
     setStage(2);
     const picks = items.map(item => item.products[0]?.title || item.name);
-    const { imageUrl } = await post('render', { image, editPrompt: plan.editPrompt, products: picks });
+    const { imageUrl, pins } = await post('render', { image, editPrompt: plan.editPrompt, products: picks, names: items.map(item => item.name) });
     store.credits -= 1;
     const before = previous ? previous.before : await resizeImage(image, 480, 0.7);
     const title = previous ? previous.title : `${answers.style} ${answers.room}`.toLowerCase().replace(/^./, char => char.toUpperCase());
-    const design = { id: previous?.id || Date.now(), imageUrl, before, summary: plan.summary, items, title, answers };
+    const design = { id: previous?.id || Date.now(), imageUrl, pins, before, summary: plan.summary, items, title, answers };
     store.designs = [design, ...store.designs.filter(entry => entry.id !== design.id)].slice(0, 8);
     saveStore();
     state.result = previous ? design : { ...design, before: image };
@@ -467,7 +476,7 @@ const actions = {
   tips: showTips,
   generate,
   async sample() {
-    const blob = await (await fetch('./assets/ex-japandi-before.webp')).blob();
+    const blob = await (await fetch('./assets/real-living-before.webp')).blob();
     state.draft.photo = await resizeImage(blob, MAX_SIDE, 0.82);
     render();
   },

@@ -157,7 +157,29 @@ async function render(body, key) {
   });
   const imageUrl = result.images?.[0]?.url;
   if (!imageUrl) throw new Error('fal returned no image');
-  return json({ imageUrl });
+  return json({ imageUrl, pins: await locateItems(imageUrl, body.names, key) });
+}
+
+// Finds where each piece sits so the app can put its price on the photo.
+async function locateItems(imageUrl, names, key) {
+  const list = Array.isArray(names) ? names.slice(0, 4).map(name => clip(name, 60)).filter(Boolean) : [];
+  if (!list.length) return [];
+  try {
+    const result = await callFal(VISION_URL, key, {
+      model: PLANNER_MODEL,
+      prompt: `Find the center of each item in this photo, as a percentage of the image width and height. Items: ${list.join(', ')}. Return only JSON: [{"name":"exact item name","x":50,"y":50}]. Skip items you cannot see.`,
+      image_urls: [imageUrl],
+    });
+    return parseJson(result.output, '[', ']').flatMap(spot => {
+      const x = Number(spot.x);
+      const y = Number(spot.y);
+      const name = list.find(item => item.toLowerCase() === String(spot.name).toLowerCase());
+      return name && x >= 0 && x <= 100 && y >= 0 && y <= 100 ? [{ name, x: Math.min(Math.max(x, 8), 92), y: Math.min(Math.max(y, 8), 92) }] : [];
+    });
+  } catch (error) {
+    console.error('locate failed', error.message);
+    return [];
+  }
 }
 
 async function chat(body, key) {
