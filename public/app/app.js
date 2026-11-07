@@ -1,6 +1,6 @@
 import { buyPlan, isPro, planPrices } from './billing.js';
 import { CREDITS, REFILL_DAYS } from './config.js';
-import { EXAMPLES } from './examples.js';
+import { EXAMPLES, HERO_PINS } from './examples.js';
 
 const view = document.querySelector('#view');
 const nav = document.querySelector('#nav');
@@ -140,6 +140,18 @@ function creditLabel() {
   return `${store.credits} credit${store.credits === 1 ? '' : 's'}`;
 }
 
+function heroReveal() {
+  return `<section class="item">
+    <h2>Watch a room transform</h2>
+    <div class="hero-video">
+      <video src="./assets/hero-reveal.mp4" poster="./assets/hero-reveal.jpg" muted playsinline autoplay preload="auto" aria-label="A plain bedroom transforms into a finished living space"></video>
+      <div class="hero-tags" data-hero-tags hidden>${priceTags(HERO_PINS)}</div>
+      <button class="tag hero-replay" data-act="replay" hidden>Replay</button>
+    </div>
+    <p class="muted">When it ends, tap a price to see the product.</p>
+  </section>`;
+}
+
 function homeView() {
   return `<header class="topbar">
       <button class="pill" data-act="upgrade">${creditLabel()}</button>
@@ -153,6 +165,7 @@ function homeView() {
       <span class="tag">Start here</span>
       <div class="feature-body"><h2>See it in your room</h2><button class="primary" data-act="start">Try now <span aria-hidden="true">→</span></button></div>
     </article>
+    ${heroReveal()}
     <section class="item"><h2>One room. Your style.</h2><p class="muted">Tap a price to see the product. Example rooms are generated previews.</p></section>
     ${EXAMPLES.map(({ id, room, title, pins }) => `<section class="item example">${compare(`./assets/real-${room}-before.webp`, `./assets/look-${id}.webp`, pins)}<div><strong>${title}</strong><small>${pins.map(pin => pin.store).filter((store, index, list) => list.indexOf(store) === index).join(', ')}</small></div></section>`).join('')}`;
 }
@@ -476,6 +489,13 @@ function showTips() {
 }
 
 const actions = {
+  replay() {
+    view.querySelector('[data-hero-tags]').hidden = true;
+    view.querySelector('.hero-replay').hidden = true;
+    const video = view.querySelector('.hero-video video');
+    video.currentTime = 0;
+    video.play();
+  },
   start: startDesign,
   upgrade: () => openPaywall(),
   settings: () => go('settings'),
@@ -516,6 +536,14 @@ document.addEventListener('click', event => {
     go('result');
   }
 });
+
+// Media events do not bubble, so this listens during capture.
+view.addEventListener('ended', event => {
+  const hero = event.target.closest('.hero-video');
+  if (!hero) return;
+  hero.querySelector('[data-hero-tags]').hidden = false;
+  hero.querySelector('.hero-replay').hidden = false;
+}, true);
 
 view.addEventListener('input', event => {
   if (event.target.type === 'range') event.target.closest('.compare').style.setProperty('--split', event.target.value + '%');

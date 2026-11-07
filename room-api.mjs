@@ -10,7 +10,7 @@ Find the revisions this room can realistically take, based on what you see and w
 Return only JSON with this shape:
 {"summary":"...","editPrompt":"...","items":[{"name":"...","reason":"...","query":"..."}]}
 summary: two warm sentences on what you will change and why it suits this room.
-editPrompt: instruction for an image editor. Start with "Keep the same walls, windows, floor and camera angle." Then describe the changes and where they go. Keep useful items like the TV unless the customer asks to remove them. Be bold: rearrange the layout and replace old furniture with clearly different pieces, not lookalikes.
+editPrompt: instruction for an image editor. Start with "Keep the same walls, windows, floor and camera angle." Then describe the changes and where they go. Keep useful items already in the photo, such as a TV, unless the customer asks to remove them. Never add a TV or anything else as a kept item if it is not in the photo. Be bold: rearrange the layout and replace old furniture with clearly different pieces, not lookalikes.
 items: 2 to 4 products to buy for those changes. name is a short product type. reason says why it fits this room. query is an Amazon search phrase with material, color and size.
 Respect the budget. Do not invent brands or prices.`;
 

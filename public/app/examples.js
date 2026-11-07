@@ -137,3 +137,42 @@ export const EXAMPLES = [
     ]
   }
 ];
+
+export const HERO_PINS = [
+  {
+    "name": "Sofa",
+    "title": "108\" Boneless Couch with Chaise, Cloud Sectional Modular Sofa, LightGray",
+    "store": "Amazon",
+    "price": "$439.99",
+    "url": "https://www.amazon.com/Boneless-Chaise-Sectional-Modular-LightGray/dp/B0GVXLJPB2",
+    "x": 31,
+    "y": 60
+  },
+  {
+    "name": "Coffee table",
+    "title": "Lantine Round Coffee Table, 31.5\" 2-Tier Coffee Table with Storage Shelf, Rustic Wooden Center Table with Thic",
+    "store": "Target",
+    "price": "$169.99",
+    "url": "https://www.target.com/p/lantine-round-coffee-table-31-5-2-tier-coffee-table-with-storage-shelf-rustic-wooden-center-table-with-thick-tabletop-for-living-room-oak-brown/-/A-1012230783",
+    "x": 44,
+    "y": 76
+  },
+  {
+    "name": "Area rug",
+    "title": "nuLOOM Mallory Hand Hooked Wool Geometric High Low Textured Ivory 8 ft. x 10 ft. Area Rug",
+    "store": "Home Depot",
+    "price": "$260.46",
+    "url": "https://www.homedepot.com/p/nuLOOM-Mallory-Hand-Hooked-Wool-Geometric-High-Low-Textured-Ivory-8-ft-x-10-ft-Area-Rug-SMCM03A-8010/324522465",
+    "x": 19,
+    "y": 88
+  },
+  {
+    "name": "Floor lamp",
+    "title": "Better Homes & Gardens 63 in Natural Wood Tripod Floor Lamp with Pleated Shade",
+    "store": "Walmart",
+    "price": "$99.00",
+    "url": "https://www.walmart.com/ip/BHG-PLT-SHD-FLR-LMP/15719654437",
+    "x": 57,
+    "y": 31
+  }
+];
